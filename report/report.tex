@@ -1,0 +1,208 @@
+\documentclass[12pt,reqno, twoside]{amsbook}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{eurosym}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[onehalfspacing]{setspace}
+\usepackage{chngcntr}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage[portuguese]{babel}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{etoolbox}
+\usepackage{array}
+\usepackage{booktabs}
+
+\makeatletter
+    \def\section{\@startsection{section}{1}%
+      \z@{.5\linespacing\@plus.7\linespacing}{.25\linespacing}%
+      {\normalfont\bfseries\flushleft}}
+    \def\subsection{\@startsection{subsection}{2}%
+      \z@{.5\linespacing\@plus.7\linespacing}{.25\linespacing}%
+      {\normalfont\bfseries\flushleft}}
+
+\makeatother
+\setcounter{MaxMatrixCols}{10}
+
+\providecommand{\U}[1]{\protect\rule{.1in}{.1in}}
+\theoremstyle{plain}
+\newtheorem{acknowledgement}{Agradecimento}
+\newtheorem{algorithm}{Algoritmo}[chapter]
+\newtheorem{axiom}{Axioma}[chapter]
+\newtheorem{case}{Caso}[chapter]
+\newtheorem{claim}{Claim}[chapter]
+\newtheorem{conclusion}{Conclusão}[chapter]
+\newtheorem{condition}{Condição}[chapter]
+\newtheorem{conjecture}{Conjetura}[chapter]
+\newtheorem{corollary}{Corolário}[chapter]
+\newtheorem{criterion}{Critério}[chapter]
+\newtheorem{definition}{Definição}[chapter]
+\newtheorem{example}{Exemplo}[chapter]
+\newtheorem{exercise}{Exercício}[chapter]
+\newtheorem{lemma}{Lema}[chapter]
+\newtheorem{notation}{Notação}[chapter]
+\newtheorem{problem}{Problema}[chapter]
+\newtheorem{proposition}{Proposição}[chapter]
+\newtheorem{remark}{Nota}[chapter]
+\newtheorem{solution}{Solução}[chapter]
+\newtheorem{summary}{Sumário}[chapter]
+\newtheorem{theorem}{Teorema}[chapter]
+\numberwithin{equation}{chapter}
+
+\newenvironment{dedication}
+  {
+   \thispagestyle{empty}
+   \vspace*{\stretch{1}}
+   \itshape             
+   \raggedleft          
+  }
+  {\par 
+   \vspace{\stretch{3}} 
+  }
+  \numberwithin{section}{chapter}
+\fancyhead{}
+\fancyfoot{}
+\pagestyle{fancy}
+\fancyfoot[LE,RO]{\thepage}
+
+\makeatletter
+\def\ps@plain{\ps@empty
+ \def\@evenfoot{%
+   \normalfont\scriptsize
+   \rlap{\thepage}\hfil
+   }%
+ \def\@oddfoot{%
+   \normalfont\scriptsize \hfil
+   \llap{\thepage}}%
+}
+\makeatother
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\begin{document}
+\input{capa}
+\thispagestyle{empty}
+\null
+\newpage
+\setcounter{page}{1}
+
+\frontmatter
+\addtocontents{toc}{\setcounter{tocdepth}{2}}
+\thispagestyle{empty}
+
+\chapter*{Resumo}
+Este trabalho apresenta a fundamentação teórica e o modelo concetual para a implementação de um middleware/proxy de segurança adaptativo em Python, focado na proteção da privacidade e na redução de dados em trânsito entre sistemas de informação. Inspirado nos modelos PRIPRO (perfis de privacidade de utilizador) e PADRES (privacy-aware data reduction and encryption scheme), o sistema intercepta pedidos de dados HTTP/REST e aplica transformações dinâmicas baseadas no perfil de autorização do requerente. São definidos três níveis de acesso: Administrador (acesso integral com permissões), Operacional/Analista (mascaragem dinâmica e pseudonimização de atributos sensíveis) e Público/Terceiros (agregação de métricas e minimização do payload). O documento estabelece o enquadramento regulatório (RGPD e Diretiva NIS2), a revisão do estado da arte e trabalhos relacionados, bem como a formalização matemática da alteração da Entropia de Shannon e da taxa de redução de dados ($\Delta D$).
+
+\renewcommand{\contentsname}{Índice}
+\tableofcontents
+
+\mainmatter
+
+\hyphenation{middleware privacy-aware proxy anonymization pseudonimization}
+
+\setcounter{page}{1} \pagenumbering{arabic}
+
+\chapter{Introdução}
+\noindent O aumento exponencial da troca de informação entre sistemas heterogéneos levanta grandes desafios quanto à segurança, privacidade dos dados e eficiência dos recursos de rede. Na interseção entre a conformidade regulatória e o desempenho técnico, torna-se premente adotar arquiteturas capazes de gerir o acesso a dados de forma dinâmica e contextual.
+
+\section{Contexto e Motivação}
+\noindent Em ecossistemas modernos de APIs RESTful, a partilha indiscriminada de dados brutos expõe frequentemente informação pessoal identificável (PII) e atributos sensíveis a entidades que apenas necessitam de métricas consolidadas ou visualizações parciais. 
+
+\section{Definição do Problema}
+\noindent As soluções tradicionais de controlo de acessos estático baseadas apenas em papéis (RBAC) são insuficientes para responder a requisitos regulatórios estritos e à necessidade de otimização de largura de banda em tempo real. Existe um conflito direto entre a utilidade da informação e a minimização de dados transferidos na rede.
+
+\section{Objetivos do Trabalho}
+\noindent Este projeto divide-se em duas componentes essenciais:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Objetivo Teórico (Parte 1):} Revisão do estado da arte em controlo de acessos adaptativo e privacidade, enquadramento regulatório (RGPD e Diretiva NIS2), e formalização matemática do nível de entropia de informação (Entropia de Shannon) e da taxa de redução do payload ($\Delta D$).
+    \item \textbf{Objetivo Prático (Parte 2):} Implementação do protótipo do proxy/middleware em Python (com FastAPI/Flask), medição do impacto no desempenho (latência em ms, CPU e memória) e validação funcional adaptada aos perfis de acesso em tempo real.
+\end{itemize}
+
+\chapter{Enquadramento Regulatório e Normativo}
+\noindent A conceção de arquiteturas de segurança intermédias deve respeitar as exigências regulatórias impostas pela União Europeia.
+
+\section{Regulamento Geral sobre a Proteção de Dados (RGPD)}
+\noindent O RGPD estabelece princípios fundamentais aplicáveis ao processamento de dados pessoais \cite{breitbarth2019}:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Minimização dos Dados (Artigo 5.º, n.º 1, alínea c):} Os dados devem ser adequados, pertinentes e limitados ao que é estritamente necessário relativamente às finalidades para as quais são tratados.
+    \item \textbf{Data Protection by Design and by Default (Artigo 25.º):} O middleware deve integrar técnicas de proteção (como pseudonimização e mascaragem) diretamente no fluxo de processamento de dados.
+\end{itemize}
+
+\section{Diretiva NIS2}
+\noindent A Diretiva NIS2 reforça a resiliência das redes e dos sistemas de informação, impondo controlos de acessos rigorosos, encriptação e mecanismos adequados de gestão de vulnerabilidades e transferência segura de dados nas infraestruturas críticas.
+
+\chapter{Estado da Arte e Trabalhos Relacionados}
+\noindent A literatura científica tem proposto diversos esquemas para assegurar a privacidade e a eficiência na transmissão de dados.
+
+\section{Análise dos Modelos Base}
+\noindent A proposta deste projeto baseia-se na fusão e adaptação dos seguintes modelos de referência:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Modelo PRIPRO / PRIADA:} Focado na gestão de perfis de privacidade do utilizador e na adaptação dinâmica da informação com base em permissões e contexto \cite{cesconetto2020}.
+    \item \textbf{Modelo PADRES:} Propõe esquemas de redução de dados e encriptação consciente da privacidade (\textit{privacy-aware data reduction and encryption scheme}), promovendo a remoção ou agregação de atributos secundários para diminuir o tamanho dos dados transmitidos na rede \cite{pereira2022}.
+\end{itemize}
+
+\section{Análise Comparativa de Trabalhos Relacionados}
+\noindent A Tabela \ref{tab:trabalhos_relacionados} sistematiza a comparação entre abordagens tradicionais, os modelos base da literatura e o middleware adaptativo proposto neste trabalho.
+
+\begin{table}[h!]
+\centering
+\caption{Comparação entre Abordagens de Privacidade e Proteção de Dados}
+\label{tab:trabalhos_relacionados}
+\small
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{>{\centering\arraybackslash}p{3.8cm}>{\centering\arraybackslash}p{2.5cm}>{\centering\arraybackslash}p{2.5cm}>{\centering\arraybackslash}p{2.5cm}>{\centering\arraybackslash}p{2.5cm}}
+\hline
+\textbf{Modelo / Abordagem} & \shortstack{\textbf{Controlo}\\\textbf{de Acesso}} & \shortstack{\textbf{Mascara-}\\\textbf{gem}} & \shortstack{\textbf{Redução}\\\textbf{($\Delta D$)}} & \shortstack{\textbf{Adaptabili-}\\\textbf{dade}} \\ \hline
+RBAC Tradicional & Estático & Não & Não & Baixa \\
+Modelo PRIPRO & \shortstack{Dinâmico/\\Perfis} & Sim & Parcial & Média \\
+Modelo PADRES & \shortstack{Regras/\\Privacidade} & Sim & Sim & Alta \\
+\shortstack{\textbf{Proposta}\\\textbf{(Middleware)}} & \shortstack{\textbf{Contextual}\\\textbf{Tokens}} & \shortstack{\textbf{Sim}\\\textbf{(Dinam.)}} & \shortstack{\textbf{Sim}\\\textbf{($\Delta D$)}} & \shortstack{\textbf{Alta}\\\textbf{(Tempo Real)}} \\ \hline
+\end{tabular}
+\end{table}
+
+\chapter{Formalização Matemática}
+\noindent Para avaliar de forma rigorosa o impacto do middleware tanto ao nível da privacidade como ao nível da eficiência da rede, são utilizadas duas métricas matemáticas fundamentais.
+
+\section{Nível de Informação: Entropia de Shannon}
+\noindent A Entropia de Shannon $H(X)$ mede a incerteza ou o grau de informação contido numa variável aleatória de dados $X$ com possíveis resultados $\{x_1, x_2, \dots, x_n\}$ e probabilidades $P(x_i)$ \cite{shannon1948}:
+
+\begin{equation}
+H(X) = - \sum_{i=1}^{n} P(x_i) \log_2 P(x_i) \label{eqn:entropia}
+\end{equation}
+
+\noindent Quando o middleware aplica técnicas de mascaragem dinâmica, pseudonimização ou eliminação de campos sensíveis para os perfis de menor privilégio (ex.: Analista ou Público), a variabilidade e incerteza associadas aos dados revelados altera-se, permitindo quantificar formalmente a redução de informação exposta.
+
+\section{Taxa de Redução de Payload ($\Delta D$)}
+\noindent A taxa de redução do tamanho dos dados transmitidos na rede ($\Delta D$) quantifica a eficiência do esquema tipo PADRES em termos de poupança de largura de banda. Sejam $S_{orig}$ o tamanho do payload original em bytes e $S_{trans}$ o tamanho do payload transformado entregue ao cliente:
+
+\begin{equation}
+\Delta D = \left( 1 - \frac{S_{trans}}{S_{orig}} \right) \times 100\% \label{eqn:reducao_dados}
+\end{equation}
+
+\noindent A equação (\ref{eqn:reducao_dados}) demonstra a percentagem de carga útil omitida ou agregada. No perfil Público/Terceiros, prevê-se que $S_{trans} \ll S_{orig}$, resultando numa taxa $\Delta D$ elevada.
+
+\chapter{Arquitetura Proposta para o Middleware}
+\noindent O sistema atua como um proxy de segurança em Python intercetando pedidos entre clientes e serviços de backend.
+
+\section{Perfis de Acesso Adaptativos}
+\noindent O middleware processa as respostas dinamicamente segundo três perfis principais:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Perfil Administrador:} Recebe o conjunto de dados completo com permissões integrais de administração.
+    \item \textbf{Perfil Operacional / Analista:} Recebe os dados com mascaragem automática e pseudonimização de atributos confidenciais.
+    \item \textbf{Perfil Público / Terceiros:} Recebe apenas dados agregados e métricas consolidadas, minimizando o payload enviado.
+\end{itemize}
+
+\chapter{Conclusões e Trabalhos Futuros}
+\noindent A formalização teórica apresentada neste relatório valida a viabilidade de combinar o controlo adaptativo por perfis (PRIPRO) com o esquema de redução de dados consciente da privacidade (PADRES). Como trabalhos futuros no âmbito da Parte 2 do projeto, proceder-se-á à implementação do protótipo em Python recorrendo às frameworks FastAPI/Flask, desenvolvendo scripts de benchmarking para medir latência (ms), consumo de CPU e memória.
+
+\renewcommand{\bibname}{Referências Bibliográficas}
+\bibliographystyle{amsplain}
+\bibliography{references}
+
+\end{document}
