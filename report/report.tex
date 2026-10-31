@@ -97,7 +97,6 @@
 \thispagestyle{empty}
 
 \chapter*{Resumo}
-Este trabalho apresenta a fundamentação teórica e o modelo concetual para a implementação de um middleware/proxy de segurança adaptativo em Python, focado na proteção da privacidade e na redução de dados em trânsito entre sistemas de informação. Inspirado nos modelos PRIPRO (perfis de privacidade de utilizador) e PADRES (privacy-aware data reduction and encryption scheme), o sistema intercepta pedidos de dados HTTP/REST e aplica transformações dinâmicas baseadas no perfil de autorização do requerente. São definidos três níveis de acesso: Administrador (acesso integral com permissões), Operacional/Analista (mascaragem dinâmica e pseudonimização de atributos sensíveis) e Público/Terceiros (agregação de métricas e minimização do payload). O documento estabelece o enquadramento regulatório (RGPD e Diretiva NIS2), a revisão do estado da arte e trabalhos relacionados, bem como a formalização matemática da alteração da Entropia de Shannon e da taxa de redução de dados ($\Delta D$).
 
 \renewcommand{\contentsname}{Índice}
 \tableofcontents
@@ -107,23 +106,31 @@ Este trabalho apresenta a fundamentação teórica e o modelo concetual para a i
 \hyphenation{middleware privacy-aware proxy anonymization pseudonimization}
 
 \setcounter{page}{1} \pagenumbering{arabic}
-
 \chapter{Introdução}
-\noindent O aumento exponencial da troca de informação entre sistemas heterogéneos levanta grandes desafios quanto à segurança, privacidade dos dados e eficiência dos recursos de rede. Na interseção entre a conformidade regulatória e o desempenho técnico, torna-se premente adotar arquiteturas capazes de gerir o acesso a dados de forma dinâmica e contextual.
+\noindent A crescente integração entre sistemas de informação tem aumentado a circulação de dados através de interfaces de programação de aplicações (APIs), em particular de serviços HTTP/REST. Embora esta partilha permita automatizar processos e disponibilizar informação a diferentes entidades, uma resposta pode conter atributos que não são necessários para todos os seus destinatários. A exposição desses atributos aumenta o risco para a privacidade e pode também implicar a transmissão de um volume de dados superior ao necessário.
+
+\noindent Neste contexto, este trabalho propõe o desenvolvimento de um middleware/proxy de privacidade em Python, colocado entre os clientes e os serviços de backend. A camada intermédia deverá identificar o perfil associado ao pedido e adaptar a resposta antes de a devolver ao cliente. Deste modo, pretende-se aproximar o controlo de acesso da própria representação dos dados transmitidos, sem pressupor que todos os clientes autorizados necessitam da mesma informação.
 
 \section{Contexto e Motivação}
-\noindent Em ecossistemas modernos de APIs RESTful, a partilha indiscriminada de dados brutos expõe frequentemente informação pessoal identificável (PII) e atributos sensíveis a entidades que apenas necessitam de métricas consolidadas ou visualizações parciais. 
+\noindent Em ecossistemas de APIs RESTful, os mecanismos de autorização determinam frequentemente se um pedido pode aceder a um recurso, mas não adaptam necessariamente o conteúdo da resposta às necessidades concretas de quem o solicita. Assim, um consumidor autorizado a consultar um recurso pode receber dados pessoais identificáveis (PII) ou outros atributos sensíveis, mesmo quando apenas necessita de uma visão parcial ou de métricas consolidadas. A aplicação de uma política uniforme pode, por isso, favorecer a utilidade operacional à custa da minimização da informação divulgada.
+
+\noindent A motivação do projeto é explorar uma abordagem intermédia que combine perfis de acesso com transformações do payload. Inspirado nos modelos PRIPRO/PRIADA, que orientam a gestão dinâmica de perfis de privacidade e a gestão de contexto em ambientes distribuídos \cite{cesconetto2020}, e PADRES, associado à redução de dados consciente da privacidade e à regulação de segurança \cite{pereira2022}, o middleware deverá adaptar a resposta a três perfis previstos na proposta: o Administrador recebe os dados necessários às suas funções e permissões; o Operacional/Analista recebe dados com mascaragem ou pseudonimização de atributos confidenciais; e o Público/Terceiros recebe informação agregada e reduzida. A aplicação destas transformações procura limitar a exposição de dados e, nos casos em que os campos são omitidos ou agregados, reduzir também o payload transmitido.
+
+\noindent Esta abordagem exige considerar simultaneamente a proteção da informação e a sua utilidade. A transformação não deve remover dados necessários à finalidade legítima do pedido, e a redução do payload não constitui, por si só, uma garantia de anonimização ou de conformidade regulatória. Por esse motivo, o trabalho enquadra a proposta nos princípios do RGPD e na resiliência dos sistemas de informação abordada pela Diretiva NIS2, e prevê avaliar o comportamento do protótipo através de testes funcionais e métricas de desempenho.
 
 \section{Definição do Problema}
-\noindent As soluções tradicionais de controlo de acessos estático baseadas apenas em papéis (RBAC) são insuficientes para responder a requisitos regulatórios estritos e à necessidade de otimização de largura de banda em tempo real. Existe um conflito direto entre a utilidade da informação e a minimização de dados transferidos na rede.
+\noindent O problema central consiste na dificuldade de conciliar a disponibilização de informação útil com a limitação dos dados pessoais e do volume de informação transmitidos a cada consumidor. Uma decisão estática de permitir ou negar o acesso, incluindo uma política baseada em papéis (RBAC), pode não distinguir entre destinatários com necessidades diferentes perante o mesmo recurso. Como consequência, mesmo quando o acesso é legítimo, a resposta pode conter mais informação do que a necessária.
+
+\noindent Pretende-se, por isso, estudar como um middleware pode usar o perfil associado ao pedido para aplicar políticas de transformação coerentes antes de encaminhar a resposta. A solução deverá articular a identificação do perfil, a seleção dos campos a manter ou transformar e a entrega da resposta adaptada. A sua avaliação deverá verificar se cada perfil recebe o tipo de informação esperado e medir o custo introduzido pela camada intermédia, incluindo latência e consumo de recursos, bem como a variação do tamanho do payload. O desafio está em reduzir a exposição e a transmissão de dados sem comprometer a correção funcional das respostas.
 
 \section{Objetivos do Trabalho}
-\noindent Este projeto divide-se em duas componentes essenciais:
+\noindent O objetivo geral é conceber e avaliar um protótipo de middleware/proxy que adapte respostas de APIs segundo perfis de acesso, combinando proteção da privacidade e redução de dados. Para o concretizar, o projeto divide-se em duas componentes:
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Objetivo Teórico (Parte 1):} Revisão do estado da arte em controlo de acessos adaptativo e privacidade, enquadramento regulatório (RGPD e Diretiva NIS2), e formalização matemática do nível de entropia de informação (Entropia de Shannon) e da taxa de redução do payload ($\Delta D$).
-    \item \textbf{Objetivo Prático (Parte 2):} Implementação do protótipo do proxy/middleware em Python (com FastAPI/Flask), medição do impacto no desempenho (latência em ms, CPU e memória) e validação funcional adaptada aos perfis de acesso em tempo real.
+    \item \textbf{Objetivo Teórico (Parte 1):} Rever abordagens de controlo de acesso adaptativo e de proteção da privacidade, enquadrar a proposta face ao RGPD e à Diretiva NIS2 e formalizar métricas para discutir a informação exposta, com base na Entropia de Shannon, e a redução do payload, através de $\Delta D$.
+    \item \textbf{Objetivo Prático (Parte 2):} Implementar um protótipo modular em Python, recorrendo a FastAPI ou Flask, que intercepte pedidos HTTP/REST e adapte as respostas para os perfis definidos. Validar funcionalmente as transformações e comparar o comportamento com e sem middleware, medindo a latência, o consumo de CPU e memória e o tamanho dos dados transmitidos.
 \end{itemize}
 
+\noindent O trabalho incide sobre um protótipo e a sua avaliação experimental; os resultados permitirão caracterizar a abordagem no cenário de teste, não constituindo por si só uma certificação de conformidade nem uma demonstração de adequação a ambientes de produção.
 \chapter{Enquadramento Regulatório e Normativo}
 \noindent A conceção de arquiteturas de segurança intermédias deve respeitar as exigências regulatórias impostas pela União Europeia.
 
