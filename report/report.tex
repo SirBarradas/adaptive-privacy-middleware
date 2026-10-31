@@ -132,17 +132,38 @@
 
 \noindent O trabalho incide sobre um protótipo e a sua avaliação experimental; os resultados permitirão caracterizar a abordagem no cenário de teste, não constituindo por si só uma certificação de conformidade nem uma demonstração de adequação a ambientes de produção.
 \chapter{Enquadramento Regulatório e Normativo}
-\noindent A conceção de arquiteturas de segurança intermédias deve respeitar as exigências regulatórias impostas pela União Europeia.
+\noindent A conceção de um middleware que intermedeia pedidos e respostas deve considerar tanto a proteção dos dados pessoais como a segurança e a resiliência dos sistemas de informação. Neste projeto, o Regulamento Geral sobre a Proteção de Dados (RGPD) é relevante quando os dados tratados permitem identificar diretamente ou indiretamente uma pessoa singular. A Diretiva NIS2, por sua vez, estabelece requisitos de gestão de riscos de cibersegurança para as entidades abrangidas pelo seu âmbito. Os dois instrumentos são complementares, mas têm objetivos e âmbitos de aplicação distintos: a existência do protótipo, por si só, não demonstra conformidade com nenhum deles.
 
 \section{Regulamento Geral sobre a Proteção de Dados (RGPD)}
-\noindent O RGPD estabelece princípios fundamentais aplicáveis ao processamento de dados pessoais \cite{breitbarth2019}:
+\noindent O RGPD estabelece princípios e obrigações aplicáveis ao tratamento de dados pessoais \cite{rgpd2016}. Para o middleware proposto, são particularmente relevantes:
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Minimização dos Dados (Artigo 5.º, n.º 1, alínea c):} Os dados devem ser adequados, pertinentes e limitados ao que é estritamente necessário relativamente às finalidades para as quais são tratados.
-    \item \textbf{Data Protection by Design and by Default (Artigo 25.º):} O middleware deve integrar técnicas de proteção (como pseudonimização e mascaragem) diretamente no fluxo de processamento de dados.
+    \item \textbf{Limitação das finalidades e minimização (Artigo 5.º, n.º 1, alíneas b) e c)):} Os dados devem ser tratados para finalidades determinadas e explícitas, e limitar-se ao que é necessário para essas finalidades. No protótipo, isto implica definir, por recurso e perfil, que campos são necessários, em vez de devolver automaticamente toda a resposta do serviço de backend.
+    \item \textbf{Exatidão e limitação da conservação (Artigo 5.º, n.º 1, alíneas d) e e)):} Os dados devem ser exatos e conservados apenas durante o período necessário. Embora o middleware se concentre na resposta em trânsito, os registos e dados temporários que possa produzir também devem ser considerados na conceção e nos testes.
+    \item \textbf{Integridade, confidencialidade e responsabilidade (Artigo 5.º, n.º 1, alínea f), e n.º 2):} O responsável pelo tratamento deve assegurar proteção adequada contra tratamento não autorizado ou ilícito e conseguir demonstrar o cumprimento dos princípios aplicáveis. A adaptação de respostas deve, portanto, ser acompanhada por controlos de acesso e por políticas verificáveis, não apenas por remoção de campos.
+    \item \textbf{Proteção de dados desde a conceção e por defeito (Artigo 25.º):} As medidas técnicas e organizacionais devem ser integradas na conceção do tratamento e, por defeito, limitar a quantidade de dados, a extensão do tratamento, o período de conservação e a acessibilidade. A separação das respostas por perfil constitui uma possível medida técnica, desde que os perfis e as regras sejam definidos de forma adequada à finalidade.
+    \item \textbf{Segurança do tratamento (Artigo 32.º):} As medidas devem ser adequadas ao risco e podem incluir pseudonimização e cifragem, mecanismos para garantir confidencialidade, integridade, disponibilidade e resiliência, bem como processos de teste e avaliação regulares. O artigo não prescreve uma tecnologia única: a escolha deve considerar o contexto, os riscos e o estado da técnica.
 \end{itemize}
 
+\noindent É importante distinguir as transformações previstas. A \textit{mascaragem} pode ocultar parte de um valor numa resposta, mas não garante, por si só, que a pessoa deixe de ser identificável. A \textit{pseudonimização}, nos termos do artigo 4.º, n.º 5, substitui identificadores por outros valores e exige que a informação adicional que permita atribuir os dados a uma pessoa seja mantida separadamente e protegida; os dados pseudonimizados continuam a ser dados pessoais quando a reidentificação é possível. A anonimização exige que a identificação deixe efetivamente de ser razoavelmente possível, o que depende também do contexto e de outros dados disponíveis. Assim, reduzir o tamanho do payload ou aplicar hashing não deve ser apresentado automaticamente como anonimização.
+
 \section{Diretiva NIS2}
-\noindent A Diretiva NIS2 reforça a resiliência das redes e dos sistemas de informação, impondo controlos de acessos rigorosos, encriptação e mecanismos adequados de gestão de vulnerabilidades e transferência segura de dados nas infraestruturas críticas.
+\noindent A Diretiva (UE) 2022/2555, conhecida como NIS2, procura estabelecer um nível elevado comum de cibersegurança na União Europeia \cite{nis22022}. A sua aplicação depende do âmbito definido na Diretiva e da legislação nacional que a transpõe; não se deve, por isso, assumir que qualquer serviço ou protótipo está automaticamente sujeito às mesmas obrigações. Para as entidades abrangidas, a Diretiva prevê responsabilidades de governação e medidas de gestão de riscos, tendo em conta a exposição a riscos, a dimensão da entidade e a probabilidade e gravidade dos incidentes.
+
+\noindent O artigo 21.º identifica áreas de medidas de gestão de riscos, entre as quais o tratamento de incidentes, a continuidade das atividades, a segurança da cadeia de fornecimento, a segurança na aquisição, desenvolvimento e manutenção de sistemas, a avaliação da eficácia das medidas, políticas de criptografia, controlo de acessos e, quando adequado, autenticação multifator e comunicações seguras. A Diretiva não se reduz à proteção de dados pessoais: o seu foco inclui a disponibilidade e a resiliência dos sistemas e serviços.
+
+\noindent No contexto do projeto, um middleware que recebe e reencaminha pedidos é também um componente cuja configuração e funcionamento devem ser considerados no modelo de ameaças. Uma política de filtragem pode reduzir a exposição de campos, mas não substitui medidas como autenticação robusta, validação dos tokens, proteção do tráfego, gestão segura de segredos, atualização de dependências, tratamento controlado de erros e preparação para falhas. A relevância e a proporcionalidade de cada medida devem ser avaliadas em função do cenário de utilização.
+
+\section{Implicações para o protótipo}
+\noindent O enquadramento regulatório traduz-se em requisitos de conceção e de validação, não numa declaração de conformidade:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Autorização antes da transformação:} o perfil deve ser obtido de uma credencial validada, e não aceite como um valor arbitrário fornecido pelo cliente. Pedidos sem autenticação ou autorização válida não devem receber dados do backend.
+    \item \textbf{Políticas explícitas por perfil:} cada política deve indicar os campos permitidos, mascarados, pseudonimizados, omitidos ou agregados, de acordo com a finalidade prevista. A configuração deve seguir o princípio do menor privilégio e evitar que campos novos sejam expostos implicitamente.
+    \item \textbf{Proteção do fluxo e dos componentes:} devem ser consideradas a proteção das comunicações, a gestão de credenciais e segredos, a validação de entradas e respostas e a divulgação mínima de informação em erros e registos.
+    \item \textbf{Verificação funcional e de segurança:} os testes devem confirmar que cada perfil recebe apenas a resposta prevista, que pedidos inválidos ou não autorizados são rejeitados e que as transformações não alteram indevidamente os dados necessários à finalidade do serviço.
+    \item \textbf{Avaliação do impacto:} além de verificar as respostas por perfil, a avaliação prática deverá medir a latência, o consumo de CPU e memória e o tamanho do payload antes e depois da transformação. Estas métricas caracterizam o protótipo, mas não medem, isoladamente, o cumprimento das obrigações legais.
+\end{itemize}
+
+\noindent Deste modo, o RGPD orienta sobretudo a necessidade e a forma do tratamento de dados pessoais, enquanto a NIS2 enquadra a gestão de riscos de cibersegurança e a resiliência das entidades abrangidas. A arquitetura proposta pode contribuir para objetivos relacionados com ambos, mas a avaliação de conformidade exigiria analisar o tratamento completo, os responsáveis envolvidos, o contexto operacional e as medidas organizacionais e técnicas aplicáveis.
 
 \chapter{Estado da Arte e Trabalhos Relacionados}
 \noindent A literatura científica tem proposto diversos esquemas para assegurar a privacidade e a eficiência na transmissão de dados.
@@ -209,7 +230,7 @@ H(X) = - \sum_{i=1}^{n} P(x_i) \log_2 P(x_i) \label{eqn:entropia}
 \noindent A formalização teórica apresentada neste relatório valida a viabilidade de combinar o controlo adaptativo por perfis (PRIPRO) com o esquema de redução de dados consciente da privacidade (PADRES). Como trabalhos futuros no âmbito da Parte 2 do projeto, proceder-se-á à implementação do protótipo em Python recorrendo às frameworks FastAPI/Flask, desenvolvendo scripts de benchmarking para medir latência (ms), consumo de CPU e memória.
 
 \renewcommand{\bibname}{Referências Bibliográficas}
-\bibliographystyle{amsplain}
+\bibliographystyle{unsrt}
 \bibliography{references}
 
 \end{document}
