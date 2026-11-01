@@ -54,6 +54,8 @@
 \newtheorem{summary}{Sumário}[chapter]
 \newtheorem{theorem}{Teorema}[chapter]
 \numberwithin{equation}{chapter}
+\numberwithin{table}{chapter}
+\numberwithin{figure}{chapter}
 
 \newenvironment{dedication}
   {
@@ -97,6 +99,10 @@
 \thispagestyle{empty}
 
 \chapter*{Resumo}
+\noindent A integração entre sistemas de informação através de APIs REST faz circular respostas que contêm frequentemente mais dados pessoais do que os necessários para cada destinatário. Os mecanismos de autorização tradicionais decidem se um pedido pode aceder a um recurso, mas não adaptam o conteúdo devolvido. Este relatório apresenta a fundamentação teórica de um middleware/proxy de privacidade em Python que, colocado entre os clientes e os serviços de backend, identifica o perfil associado a cada pedido e transforma a resposta antes de a entregar. Inspirada nos modelos PRIPRO e PADRES, a proposta define três perfis (Administrador, Operacional/Analista e Público/Terceiros) e aplica, consoante o perfil, ações de omissão, mascaragem, pseudonimização e agregação de atributos. O trabalho enquadra a proposta no RGPD e na Diretiva NIS2, compara-a com abordagens relacionadas, formaliza métricas para a informação exposta (Entropia de Shannon) e para a redução do payload ($\Delta D$), e descreve a arquitetura e o plano de avaliação do protótipo a desenvolver na Parte 2.
+
+\vspace{0.5cm}
+\noindent\textbf{Palavras-chave:} privacidade, middleware, controlo de acesso adaptativo, minimização de dados, pseudonimização, RGPD, NIS2.
 
 \renewcommand{\contentsname}{Índice}
 \tableofcontents
@@ -292,18 +298,92 @@ minTAP
 %%
 
 \chapter{Arquitetura Proposta para o Middleware}
-\noindent O sistema atua como um proxy de segurança em Python intercetando pedidos entre clientes e serviços de backend.
+\noindent O sistema proposto atua como um proxy reverso de privacidade, implementado em Python, colocado entre os clientes e os serviços de backend. Os clientes deixam de comunicar diretamente com a API original: cada pedido é recebido pelo middleware, que valida a credencial, determina o perfil, reencaminha o pedido ao backend e transforma a resposta segundo a política associada a esse perfil antes de a devolver. O backend não necessita de ser alterado, o que permite aplicar a abordagem a serviços já existentes. A Figura \ref{fig:arquitetura} apresenta a visão geral da arquitetura.
 
-\section{Perfis de Acesso Adaptativos}
-\noindent O middleware processa as respostas dinamicamente segundo três perfis principais:
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{arquitetura.png}
+\caption{Arquitetura proposta do middleware adaptativo de privacidade e fluxo de um pedido.}
+\label{fig:arquitetura}
+\end{figure}
+
+\section{Componentes}
+\noindent A arquitetura organiza-se em componentes com responsabilidades separadas, de modo a que as políticas possam ser alteradas sem modificar o código de transformação:
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Perfil Administrador:} Recebe o conjunto de dados completo com permissões integrais de administração.
-    \item \textbf{Perfil Operacional / Analista:} Recebe os dados com mascaragem automática e pseudonimização de atributos confidenciais.
-    \item \textbf{Perfil Público / Terceiros:} Recebe apenas dados agregados e métricas consolidadas, minimizando o payload enviado.
+    \item \textbf{Autenticação e identificação do perfil:} valida a credencial apresentada pelo cliente (por exemplo, um token assinado) e extrai o perfil a partir dela. O perfil nunca é aceite como um parâmetro livre do pedido. Pedidos sem credencial válida são rejeitados (HTTP 401/403) sem que o backend seja contactado.
+    \item \textbf{Encaminhamento:} reencaminha o pedido autorizado para o serviço de backend e recebe a resposta completa, que nunca é devolvida diretamente ao cliente.
+    \item \textbf{Motor de políticas:} carrega, a partir de um ficheiro de configuração, as regras definidas por recurso e por perfil, indicando para cada campo a ação a aplicar. Campos não previstos na política são omitidos por defeito, seguindo o princípio do menor privilégio e evitando que atributos novos do backend sejam expostos implicitamente. Além do perfil, o motor pode considerar o nível de risco do contexto do pedido, formalizado no Capítulo 4: quando o risco ultrapassa um limiar, é aplicada uma variante mais restritiva da política, mantendo a utilidade acima do mínimo exigido pelo perfil.
+    \item \textbf{Transformadores:} aplicam as ações sobre o payload JSON. As ações previstas são \textit{manter}, \textit{omitir}, \textit{mascarar} (ocultação parcial do valor), \textit{pseudonimizar} (substituição por um identificador derivado com uma chave secreta, por exemplo HMAC-SHA256) e \textit{agregar} (substituição de registos individuais por contagens, médias ou intervalos).
+    \item \textbf{Entrega da resposta:} serializa o resultado e devolve-o ao cliente, com cabeçalhos e mensagens de erro que não revelem detalhes internos do backend.
+    \item \textbf{Registo e métricas:} regista, sem conteúdo pessoal, o perfil, o recurso, a latência e os tamanhos $S_{orig}$ e $S_{trans}$, permitindo calcular $\Delta D$ (equação \ref{eqn:reducao_dados}) e o consumo de recursos na avaliação experimental.
+\end{itemize}
+
+\noindent A chave de pseudonimização é mantida separadamente da configuração e dos registos, em linha com a definição de pseudonimização do RGPD discutida no Capítulo 2: sem acesso a essa informação adicional, os pseudónimos não permitem, por si só, atribuir os dados a uma pessoa.
+
+\section{Fluxo de Processamento de um Pedido}
+\noindent O processamento de um pedido segue as etapas numeradas na Figura \ref{fig:arquitetura}:
+\begin{enumerate}[leftmargin=*]
+    \item O cliente envia o pedido HTTP com a sua credencial; o middleware valida-a e determina o perfil. Se a validação falhar, o pedido termina com erro.
+    \item O pedido é reencaminhado para o backend, que devolve a resposta completa.
+    \item O motor de políticas seleciona as regras correspondentes ao par (recurso, perfil).
+    \item Os transformadores aplicam as ações campo a campo ou, no caso da agregação, sobre o conjunto de registos.
+    \item A resposta adaptada é devolvida ao cliente e as métricas do pedido são registadas.
+\end{enumerate}
+
+\section{Perfis de Acesso e Políticas de Transformação}
+\noindent O middleware processa as respostas segundo três perfis principais:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Perfil Administrador:} recebe os atributos necessários às suas funções, sem transformação dos campos autorizados.
+    \item \textbf{Perfil Operacional / Analista:} recebe registos individuais, mas com os identificadores diretos pseudonimizados e os atributos confidenciais mascarados ou omitidos, preservando a utilidade para análise.
+    \item \textbf{Perfil Público / Terceiros:} recebe apenas dados agregados e métricas consolidadas, sem registos individuais, minimizando o payload enviado.
+\end{itemize}
+
+\noindent A Tabela \ref{tab:politicas} ilustra uma política para um recurso hipotético de clientes, com o resultado esperado para cada perfil.
+
+\begin{table}[htbp]
+\centering
+\caption{Exemplo de política de transformação por perfil para um registo de cliente}
+\label{tab:politicas}
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{3.8cm}>{\raggedright\arraybackslash}p{3.2cm}}
+\toprule
+\textbf{Campo} & \textbf{Administrador} & \textbf{Operacional / Analista} & \textbf{Público / Terceiros} \\
+\midrule
+\texttt{id} & Manter & Pseudonimizar (\texttt{a91f\ldots}) & Omitir \\
+\texttt{nome} & Manter & Omitir & Omitir \\
+\texttt{email} & Manter & Mascarar (\texttt{j***@mail.pt}) & Omitir \\
+\texttt{nif} & Manter & Mascarar (\texttt{*****6789}) & Omitir \\
+\texttt{data\_nasc} & Manter & Generalizar (ano) & Agregar (faixa etária) \\
+\texttt{distrito} & Manter & Manter & Agregar (contagem) \\
+\texttt{saldo} & Manter & Manter & Agregar (média) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Para o perfil Público, a resposta deixa de ser uma lista de registos e passa a ser um resumo (por exemplo, número de clientes por distrito e saldo médio), o que torna $S_{trans}$ muito inferior a $S_{orig}$. A agregação sobre grupos muito pequenos pode, no entanto, permitir inferências sobre indivíduos; por isso, a política deve prever um tamanho mínimo de grupo abaixo do qual os valores não são divulgados.
+
+\section{Considerações de Segurança}
+\noindent Sendo um ponto obrigatório de passagem entre clientes e backend, o middleware é também um alvo e um potencial ponto único de falha. A conceção deve, por isso, contemplar: comunicações protegidas por TLS entre todos os componentes; o backend acessível apenas a partir do middleware, para que não possa ser contornado; validação da assinatura e da validade dos tokens; gestão das chaves fora do código-fonte; registos sem dados pessoais; e um comportamento seguro em caso de erro, em que uma falha na política ou na transformação resulta em recusa da resposta e não na devolução do payload original.
+
+\section{Tecnologias e Plano de Avaliação}
+\noindent O protótipo será desenvolvido em Python com FastAPI (ou Flask), recorrendo a um cliente HTTP para o encaminhamento e a um backend de teste com dados sintéticos, evitando a utilização de dados pessoais reais. A avaliação compara dois cenários, acesso direto ao backend e acesso através do middleware, para cada um dos perfis, medindo:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Correção funcional:} cada perfil recebe exatamente os campos e as transformações previstos na política, e pedidos não autorizados são rejeitados;
+    \item \textbf{Latência:} tempo de resposta médio e percentis (p50, p95) com e sem middleware;
+    \item \textbf{Recursos:} consumo de CPU e memória do processo do middleware sob carga;
+    \item \textbf{Payload e informação:} $S_{orig}$, $S_{trans}$ e $\Delta D$ por perfil, e a entropia $H(X)$ dos atributos expostos (equação \ref{eqn:entropia}).
 \end{itemize}
 
 \chapter{Conclusões e Trabalhos Futuros}
-\noindent A formalização teórica apresentada neste relatório valida a viabilidade de combinar o controlo adaptativo por perfis (PRIPRO) com o esquema de redução de dados consciente da privacidade (PADRES). Como trabalhos futuros no âmbito da Parte 2 do projeto, proceder-se-á à implementação do protótipo em Python recorrendo às frameworks FastAPI/Flask, desenvolvendo scripts de benchmarking para medir latência (ms), consumo de CPU e memória.
+\noindent Este relatório apresentou a fundamentação teórica de um middleware adaptativo de privacidade para APIs REST, que adapta o conteúdo das respostas ao perfil do consumidor em vez de se limitar a permitir ou negar o acesso. Foram enquadrados os requisitos relevantes do RGPD, em particular a minimização dos dados, a proteção de dados desde a conceção e a pseudonimização, e da Diretiva NIS2, no que respeita à gestão de riscos e à resiliência dos sistemas. A análise do estado da arte permitiu posicionar a proposta face ao controlo de acesso tradicional e aos modelos PRIPRO e PADRES, dos quais se adotam, respetivamente, a gestão de perfis de privacidade e a redução de dados consciente da privacidade.
+
+\noindent No plano matemático, foram formalizadas duas métricas complementares. A Entropia de Shannon $H(X)$ (equação \ref{eqn:entropia}) permite quantificar a informação contida nos atributos revelados antes e depois da intervenção do middleware, servindo também de critério para decidir quando aplicar pseudonimização, anonimização ou supressão. A taxa de redução do payload $\Delta D$ (equação \ref{eqn:reducao_dados}) quantifica a diminuição dos dados transmitidos e não é um valor fixo: depende do perfil do recetor, da criticidade dos dados e do nível de risco do contexto. As duas métricas foram integradas numa função de decisão adaptativa, formulada como um problema de otimização que maximiza o ganho de privacidade $\mathcal{P}(\Delta D, H(X))$ sujeito a uma utilidade mínima $U \ge U_{min}$. Quando o risco do contexto $R(t)$ ultrapassa um patamar crítico, o middleware intensifica as transformações; em ambiente confiável, preserva maior fidelidade do payload.
+
+\noindent Por fim, foi proposta uma arquitetura modular que concretiza esta formulação, com separação entre autenticação, motor de políticas e transformadores, políticas explícitas por perfil, omissão por defeito dos campos não previstos e recolha das métricas necessárias para calcular $H(X)$ e $\Delta D$ em cada pedido.
+
+\noindent A proposta tem limitações que importa reconhecer. As métricas caracterizam o comportamento do protótipo, mas não demonstram, por si só, conformidade regulatória; a mascaragem e a pseudonimização não equivalem a anonimização; e a introdução de uma camada intermédia acrescenta latência e um novo componente que tem de ser protegido. Além disso, a função de risco $R(t)$, a medida de utilidade $U$ e o limiar $U_{min}$ foram definidos a nível conceptual, e a sua concretização depende do cenário de aplicação. A validade da abordagem terá, por isso, de ser avaliada experimentalmente.
+
+\noindent Como trabalho futuro, no âmbito da Parte 2 do projeto, será implementado o protótipo em Python com FastAPI/Flask, juntamente com um backend de teste com dados sintéticos e políticas para os três perfis. Serão desenvolvidos testes funcionais e scripts de benchmarking para comparar o acesso com e sem middleware em termos de latência, consumo de CPU e memória, $\Delta D$ e entropia dos dados expostos. Como extensões possíveis, identificam-se a concretização da função de risco do contexto e da medida de utilidade a partir de atributos observáveis (por exemplo, finalidade declarada, horário ou origem do pedido), a aplicação de técnicas como o $k$-anonimato ou a privacidade diferencial aos dados agregados, e a cache de respostas transformadas para reduzir o custo introduzido pelo middleware.
 
 \renewcommand{\bibname}{Referências Bibliográficas}
 \bibliographystyle{unsrt}
