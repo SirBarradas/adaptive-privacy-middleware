@@ -54,6 +54,8 @@
 \newtheorem{summary}{Sumário}[chapter]
 \newtheorem{theorem}{Teorema}[chapter]
 \numberwithin{equation}{chapter}
+\numberwithin{table}{chapter}
+\numberwithin{figure}{chapter}
 
 \newenvironment{dedication}
   {
@@ -97,6 +99,10 @@
 \thispagestyle{empty}
 
 \chapter*{Resumo}
+\noindent A integração entre sistemas de informação através de APIs REST faz circular respostas que contêm frequentemente mais dados pessoais do que os necessários para cada destinatário. Os mecanismos de autorização tradicionais decidem se um pedido pode aceder a um recurso, mas não adaptam o conteúdo devolvido. Este relatório apresenta a fundamentação teórica de um middleware/proxy de privacidade em Python que, colocado entre os clientes e os serviços de backend, identifica o perfil associado a cada pedido e transforma a resposta antes de a entregar. Inspirada nos modelos PRIPRO e PADRES, a proposta define três perfis (Administrador, Operacional/Analista e Público/Terceiros) e aplica, consoante o perfil, ações de omissão, mascaragem, pseudonimização e agregação de atributos. O trabalho enquadra a proposta no RGPD e na Diretiva NIS2, compara-a com abordagens relacionadas, formaliza métricas para a informação exposta (Entropia de Shannon) e para a redução do payload ($\Delta D$), e descreve a arquitetura e o plano de avaliação do protótipo a desenvolver na Parte 2.
+
+\vspace{0.5cm}
+\noindent\textbf{Palavras-chave:} privacidade, middleware, controlo de acesso adaptativo, minimização de dados, pseudonimização, RGPD, NIS2.
 
 \renewcommand{\contentsname}{Índice}
 \tableofcontents
@@ -166,68 +172,218 @@
 \noindent Deste modo, o RGPD orienta sobretudo a necessidade e a forma do tratamento de dados pessoais, enquanto a NIS2 enquadra a gestão de riscos de cibersegurança e a resiliência das entidades abrangidas. A arquitetura proposta pode contribuir para objetivos relacionados com ambos, mas a avaliação de conformidade exigiria analisar o tratamento completo, os responsáveis envolvidos, o contexto operacional e as medidas organizacionais e técnicas aplicáveis.
 
 \chapter{Estado da Arte e Trabalhos Relacionados}
-\noindent A literatura científica tem proposto diversos esquemas para assegurar a privacidade e a eficiência na transmissão de dados.
 
-\section{Análise dos Modelos Base}
+\section{Modelos Base}
 \noindent A proposta deste projeto baseia-se na fusão e adaptação dos seguintes modelos de referência:
-\begin{itemize}[leftmargin=*]
-    \item \textbf{Modelo PRIPRO / PRIADA:} Focado na gestão de perfis de privacidade do utilizador e na adaptação dinâmica da informação com base em permissões e contexto \cite{cesconetto2020}.
-    \item \textbf{Modelo PADRES:} Propõe esquemas de redução de dados e encriptação consciente da privacidade (\textit{privacy-aware data reduction and encryption scheme}), promovendo a remoção ou agregação de atributos secundários para diminuir o tamanho dos dados transmitidos na rede \cite{pereira2022}.
+\begin{itemize}
+    \item \text{Modelo PRIPRO / PRIADA}% Focado na gestão de perfis de privacidade do utilizador e na adaptação dinâmica da informação com base em permissões e contexto \cite{cesconetto2020}.
+    \item \text{Modelo PADRES}% Propõe esquemas de redução de dados e encriptação consciente da privacidade (\textit{privacy-aware data reduction and encryption scheme}), promovendo a remoção ou agregação de atributos secundários para diminuir o tamanho dos dados transmitidos na rede \cite{pereira2022}.
 \end{itemize}
 
-\section{Análise Comparativa de Trabalhos Relacionados}
-\noindent A Tabela \ref{tab:trabalhos_relacionados} sistematiza a comparação entre abordagens tradicionais, os modelos base da literatura e o middleware adaptativo proposto neste trabalho.
+\section{Análise dos Modelos}
+\subsection{Modelo PRIPRO / PRIADA}
 
-\begin{table}[h!]
+O modelo PRIPRO (\textit{PRIvacy PROfiles}) integra a arquitetura UbiPri (\textit{Ubiquitous Privacy}), desenvolvida para a gestão e controlo da privacidade em ambientes ubíquos. Esta arquitetura encontra-se organizada em módulos independentes, responsáveis por diferentes dimensões da gestão da privacidade \cite{leithardt2015,cesconetto2020,prichain2019}.
+
+No contexto desta arquitetura, o módulo PRIPRO é responsável pela gestão dos perfis dos utilizadores, permitindo associar diferentes permissões e restrições aos recursos e serviços disponíveis. O objetivo é garantir que o acesso à informação e aos recursos do ambiente respeita as preferências e condições estabelecidas para cada perfil.
+
+Uma das características relevantes do PRIPRO é a possibilidade de evolução dinâmica dos perfis. A abordagem considera a frequência com que um utilizador interage com determinado ambiente para gerir a progressão ou regressão do seu perfil. Esta evolução é suportada por uma taxonomia de métricas, parâmetros e critérios hierárquicos, permitindo adaptar as permissões às características da interação \cite{cesconetto2020}.
+
+Complementarmente, o módulo PRIADA (\textit{PRIvacy ADAptation}) assume a responsabilidade pela gestão e controlo da adaptação, tratando informação relacionada com a adaptação de software e hardware no ambiente ubíquo. Enquanto o PRIPRO se concentra na gestão dos perfis e das respetivas permissões, o PRIADA está associado à adaptação do comportamento do sistema em função das condições identificadas. \cite{prichain2019,cesconetto2020,lopes2020priada}.
+
+O PRIADA foca-se na gestão e adaptação da informação considerando a localização e o contexto da interação entre o indivíduo e o ambiente. O modelo procura determinar as condições de acesso à informação com base nas circunstâncias em que ocorre a interação, evidenciando a importância de considerar o contexto como uma variável na aplicação das políticas de privacidade \cite{lopes2020priada}.
+
+\subsection{Modelo PADRES}
+O PADRES (\textit{Tool for PrivAcy, Data REgulation and Security}), desenvolvido por Pereira, Crocker e Leithardt (2022), é uma ferramenta de código aberto concebida para apoiar a análise da privacidade e segurança de aplicações Web, tendo como principal enquadramento os requisitos do Regulamento Geral sobre a Proteção de Dados (RGPD). A sua motivação está relacionada com a complexidade do processo de avaliação da conformidade regulamentar, que exige a análise de procedimentos organizacionais, aplicações e infraestruturas tecnológicas \cite{pereira2022}.
+
+A ferramenta organiza os principais princípios do RGPD sob a forma de listas de verificação e questionários, cujas respostas são introduzidas manualmente pelo utilizador. Esta abordagem permite sistematizar a avaliação de diferentes aspetos relacionados com o tratamento de dados pessoais, facilitando a identificação de possíveis lacunas relativamente aos requisitos regulamentares. Assim, o PADRES funciona como um instrumento de apoio à análise e à auditoria regulamentar \cite{pereira2022}.
+
+Para complementar a componente regulamentar, o PADRES integra ferramentas externas de análise de segurança, nomeadamente o Nmap, o OWASP ZAP e analisadores de cookies. Os resultados obtidos através destas ferramentas são armazenados e posteriormente combinados com as respostas dos questionários, permitindo gerar um relatório consolidado com sugestões e recomendações. Esta integração procura reunir, num único processo, informação relativa à avaliação da privacidade e à identificação de potenciais vulnerabilidades de segurança nas aplicações analisadas \cite{pereira2022}.
+
+
+\section{Análise Comparativa dos Trabalhos Relacionados}
+\subsection{Trabalhos Relacionados}
+Os trabalhos analisados abordam diferentes dimensões da proteção da privacidade, desde a gestão dos perfis dos utilizadores até à avaliação da conformidade regulamentar das aplicações. O PRIPRO e o PRIADA concentram-se na gestão e adaptação das políticas de privacidade em função dos perfis e do contexto, enquanto o PADRES procura apoiar a identificação de aspetos relacionados com a privacidade e a segurança de aplicações Web. Apesar de partilharem a preocupação com a proteção da informação, os seus objetivos e mecanismos de implementação são distintos \cite{cesconetto2020,lopes2020priada,pereira2022}.
+
+Uma abordagem mais diretamente relacionada com a minimização de dados em interfaces de programação é apresentada por Pallas et al. (2022), através da solução Janus. Este trabalho aborda o problema da disponibilização de informação excessiva por APIs Web, propondo um mecanismo configurável de minimização de dados para APIs GraphQL. A solução permite definir diferentes operações de redução de informação de acordo com os papéis dos consumidores, procurando disponibilizar apenas os atributos necessários a cada pedido. Os autores apresentam ainda uma implementação experimental e uma avaliação do desempenho, demonstrando a viabilidade da aplicação de políticas de minimização diretamente nas interfaces de acesso aos dados \cite{pallas2022janus}.
+
+Outra contribuição relevante é apresentada por Chen et al. (2022), através do sistema minTAP (\textit{Practical Data Access Minimization in Trigger-Action Platforms}). Esta abordagem procura reduzir o acesso excessivo a dados pessoais em plataformas que permitem estabelecer regras de automação entre diferentes serviços. Os autores identificam dois tipos de acesso excessivo: ao nível dos atributos, quando uma aplicação recebe mais campos do que aqueles de que necessita, e ao nível dos serviços, quando lhe são disponibilizadas mais APIs do que as necessárias. Para responder a este problema, o minTAP procura identificar os dados estritamente necessários à execução de cada regra, limitando a informação disponibilizada às aplicações consumidoras \cite{chen2022mintap}.
+
+A análise conjunta destes trabalhos permite identificar duas dimensões complementares. Por um lado, os modelos PRIPRO e PRIADA demonstram a importância de utilizar perfis e informação contextual para determinar as condições de acesso e adaptação. Por outro, as abordagens Janus e minTAP demonstram a possibilidade de aplicar a minimização ao nível dos atributos disponibilizados às aplicações consumidoras. O PADRES acrescenta uma perspetiva de avaliação regulamentar e de segurança, permitindo enquadrar a necessidade de verificar os mecanismos de proteção implementados \cite{cesconetto2020,lopes2020priada,pereira2022,pallas2022janus,chen2022mintap}.
+
+\subsection{Resumo da análise comparativa}
+
+Apesar da existência destas abordagens, a proposta deste projeto procura reunir estas dimensões numa camada intermédia dedicada à adaptação de respostas HTTP/REST. Ao contrário de uma solução centrada exclusivamente na gestão de permissões, pretende-se que o middleware utilize o perfil associado ao pedido para determinar não só se o acesso é permitido, mas também que informação pode ser devolvida. A transformação poderá envolver a seleção de campos, a mascaragem ou pseudonimização de atributos e a agregação de informação, de acordo com as políticas definidas para cada perfil.
+
+Deste modo, pretende-se explorar uma arquitetura que combine a gestão de perfis inspirada no PRIPRO/PRIADA com os princípios de minimização de dados presentes em trabalhos como Janus e minTAP, mantendo o enquadramento regulamentar e de segurança associado ao PADRES. A avaliação experimental permitirá analisar a eficácia funcional das transformações e o respetivo impacto na latência, no consumo de recursos e no volume de dados transmitidos. Esta combinação constitui a principal diferenciação da abordagem proposta relativamente aos trabalhos analisados.
+
+\section{Tabela Comparativa dos Trabalhos Relacionados}
+A Tabela \ref{tab} apresenta uma comparação dos trabalhos analisados na secção anterior, considerando os seus objetivos, mecanismos de proteção, utilização de perfis, adaptação da informação e aplicabilidade ao contexto das APIs. A comparação permite identificar as características já exploradas na literatura e as funcionalidades que se pretende reunir no middleware proposto.
+
+Neste enquadramento, o middleware proposto procura integrar a gestão de perfis com a transformação direta das respostas de APIs REST, permitindo aplicar diferentes níveis de proteção aos mesmos recursos. A sua avaliação experimental permitirá verificar se esta integração consegue reduzir a quantidade de informação transmitida e a exposição de atributos sensíveis, mantendo a utilidade funcional das respostas e introduzindo um custo computacional aceitável.
+
+%%tabela%%
+\begin{table}[H]
 \centering
-\caption{Comparação entre Abordagens de Privacidade e Proteção de Dados}
-\label{tab:trabalhos_relacionados}
-\small
-\setlength{\tabcolsep}{2pt}
-\begin{tabular}{>{\centering\arraybackslash}p{3.8cm}>{\centering\arraybackslash}p{2.5cm}>{\centering\arraybackslash}p{2.5cm}>{\centering\arraybackslash}p{2.5cm}>{\centering\arraybackslash}p{2.5cm}}
+\caption{Comparação dos modelos e trabalhos relacionados}
+\label{tab}
+\renewcommand{\arraystretch}{1.4}
+\setlength{\tabcolsep}{3pt}
+\scriptsize
+
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|p{2.2cm}|p{2cm}|p{2.3cm}|p{1.6cm}|p{2.5cm}|p{2.0cm}|p{2.0cm}|}
 \hline
-\textbf{Modelo / Abordagem} & \shortstack{\textbf{Controlo}\\\textbf{de Acesso}} & \shortstack{\textbf{Mascara-}\\\textbf{gem}} & \shortstack{\textbf{Redução}\\\textbf{($\Delta D$)}} & \shortstack{\textbf{Adaptabili-}\\\textbf{dade}} \\ \hline
-RBAC Tradicional & Estático & Não & Não & Baixa \\
-Modelo PRIPRO & \shortstack{Dinâmico/\\Perfis} & Sim & Parcial & Média \\
-Modelo PADRES & \shortstack{Regras/\\Privacidade} & Sim & Sim & Alta \\
-\shortstack{\textbf{Proposta}\\\textbf{(Middleware)}} & \shortstack{\textbf{Contextual}\\\textbf{Tokens}} & \shortstack{\textbf{Sim}\\\textbf{(Dinam.)}} & \shortstack{\textbf{Sim}\\\textbf{($\Delta D$)}} & \shortstack{\textbf{Alta}\\\textbf{(Tempo Real)}} \\ \hline
+\textbf{Modelo / Abordagem}
+& \centering\textbf{Controlo de Acesso}
+& \centering\textbf{Mascaragem}
+& \centering\textbf{Redução ($\Delta D$)}
+& \centering\textbf{Adaptabilidade}
+& \centering\textbf{Minimização de Dados}
+& \centering\textbf{Âmbito de Aplicação}
+\tabularnewline
+\hline
+
+PRIPRO / PRIADA
+& Perfis e contexto
+& Não especificado
+& Não especificado
+& Dinâmica
+& Não especificada
+& Ambientes ubíquos
+\tabularnewline
+\hline
+
+PADRES
+& Não aplicável
+& Não
+& Não
+& Avaliação e recomendações
+& Não implementada
+& Aplicações Web
+\tabularnewline
+\hline
+
+Janus
+& Baseado em papéis
+& Não especificado
+& Sim
+& Configurável
+& Seleção de atributos
+& APIs GraphQL
+\tabularnewline
+\hline
+
+minTAP
+& Dados e serviços
+& Não especificado
+& Sim
+& Dependente das regras
+& Atributos e serviços
+& Plataformas Trigger-Action
+\tabularnewline
+\hline
+
+\textbf{Proposta (Middleware)}
+& \textbf{Contextual / Perfis}
+& \textbf{Sim}
+& \textbf{Sim}
+& \textbf{Dinâmica}
+& \textbf{Seleção, mascaragem e agregação}
+& \textbf{APIs: HTTP e REST}
+\tabularnewline
+\hline
+\end{tabular}}
+\end{table}
+%%
+
+\chapter{Arquitetura Proposta para o Middleware}
+\noindent O sistema proposto atua como um proxy reverso de privacidade, implementado em Python, colocado entre os clientes e os serviços de backend. Os clientes deixam de comunicar diretamente com a API original: cada pedido é recebido pelo middleware, que valida a credencial, determina o perfil, reencaminha o pedido ao backend e transforma a resposta segundo a política associada a esse perfil antes de a devolver. O backend não necessita de ser alterado, o que permite aplicar a abordagem a serviços já existentes. A Figura \ref{fig:arquitetura} apresenta a visão geral da arquitetura.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{arquitetura.png}
+\caption{Arquitetura proposta do middleware adaptativo de privacidade e fluxo de um pedido.}
+\label{fig:arquitetura}
+\end{figure}
+
+\section{Componentes}
+\noindent A arquitetura organiza-se em componentes com responsabilidades separadas, de modo a que as políticas possam ser alteradas sem modificar o código de transformação:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Autenticação e identificação do perfil:} valida a credencial apresentada pelo cliente (por exemplo, um token assinado) e extrai o perfil a partir dela. O perfil nunca é aceite como um parâmetro livre do pedido. Pedidos sem credencial válida são rejeitados (HTTP 401/403) sem que o backend seja contactado.
+    \item \textbf{Encaminhamento:} reencaminha o pedido autorizado para o serviço de backend e recebe a resposta completa, que nunca é devolvida diretamente ao cliente.
+    \item \textbf{Motor de políticas:} carrega, a partir de um ficheiro de configuração, as regras definidas por recurso e por perfil, indicando para cada campo a ação a aplicar. Campos não previstos na política são omitidos por defeito, seguindo o princípio do menor privilégio e evitando que atributos novos do backend sejam expostos implicitamente. Além do perfil, o motor pode considerar o nível de risco do contexto do pedido, formalizado no Capítulo 4: quando o risco ultrapassa um limiar, é aplicada uma variante mais restritiva da política, mantendo a utilidade acima do mínimo exigido pelo perfil.
+    \item \textbf{Transformadores:} aplicam as ações sobre o payload JSON. As ações previstas são \textit{manter}, \textit{omitir}, \textit{mascarar} (ocultação parcial do valor), \textit{pseudonimizar} (substituição por um identificador derivado com uma chave secreta, por exemplo HMAC-SHA256) e \textit{agregar} (substituição de registos individuais por contagens, médias ou intervalos).
+    \item \textbf{Entrega da resposta:} serializa o resultado e devolve-o ao cliente, com cabeçalhos e mensagens de erro que não revelem detalhes internos do backend.
+    \item \textbf{Registo e métricas:} regista, sem conteúdo pessoal, o perfil, o recurso, a latência e os tamanhos $S_{orig}$ e $S_{trans}$, permitindo calcular $\Delta D$ (equação \ref{eqn:reducao_dados}) e o consumo de recursos na avaliação experimental.
+\end{itemize}
+
+\noindent A chave de pseudonimização é mantida separadamente da configuração e dos registos, em linha com a definição de pseudonimização do RGPD discutida no Capítulo 2: sem acesso a essa informação adicional, os pseudónimos não permitem, por si só, atribuir os dados a uma pessoa.
+
+\section{Fluxo de Processamento de um Pedido}
+\noindent O processamento de um pedido segue as etapas numeradas na Figura \ref{fig:arquitetura}:
+\begin{enumerate}[leftmargin=*]
+    \item O cliente envia o pedido HTTP com a sua credencial; o middleware valida-a e determina o perfil. Se a validação falhar, o pedido termina com erro.
+    \item O pedido é reencaminhado para o backend, que devolve a resposta completa.
+    \item O motor de políticas seleciona as regras correspondentes ao par (recurso, perfil).
+    \item Os transformadores aplicam as ações campo a campo ou, no caso da agregação, sobre o conjunto de registos.
+    \item A resposta adaptada é devolvida ao cliente e as métricas do pedido são registadas.
+\end{enumerate}
+
+\section{Perfis de Acesso e Políticas de Transformação}
+\noindent O middleware processa as respostas segundo três perfis principais:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Perfil Administrador:} recebe os atributos necessários às suas funções, sem transformação dos campos autorizados.
+    \item \textbf{Perfil Operacional / Analista:} recebe registos individuais, mas com os identificadores diretos pseudonimizados e os atributos confidenciais mascarados ou omitidos, preservando a utilidade para análise.
+    \item \textbf{Perfil Público / Terceiros:} recebe apenas dados agregados e métricas consolidadas, sem registos individuais, minimizando o payload enviado.
+\end{itemize}
+
+\noindent A Tabela \ref{tab:politicas} ilustra uma política para um recurso hipotético de clientes, com o resultado esperado para cada perfil.
+
+\begin{table}[htbp]
+\centering
+\caption{Exemplo de política de transformação por perfil para um registo de cliente}
+\label{tab:politicas}
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{3.8cm}>{\raggedright\arraybackslash}p{3.2cm}}
+\toprule
+\textbf{Campo} & \textbf{Administrador} & \textbf{Operacional / Analista} & \textbf{Público / Terceiros} \\
+\midrule
+\texttt{id} & Manter & Pseudonimizar (\texttt{a91f\ldots}) & Omitir \\
+\texttt{nome} & Manter & Omitir & Omitir \\
+\texttt{email} & Manter & Mascarar (\texttt{j***@mail.pt}) & Omitir \\
+\texttt{nif} & Manter & Mascarar (\texttt{*****6789}) & Omitir \\
+\texttt{data\_nasc} & Manter & Generalizar (ano) & Agregar (faixa etária) \\
+\texttt{distrito} & Manter & Manter & Agregar (contagem) \\
+\texttt{saldo} & Manter & Manter & Agregar (média) \\
+\bottomrule
 \end{tabular}
 \end{table}
 
-\chapter{Formalização Matemática}
-\noindent Para avaliar de forma rigorosa o impacto do middleware tanto ao nível da privacidade como ao nível da eficiência da rede, são utilizadas duas métricas matemáticas fundamentais.
+\noindent Para o perfil Público, a resposta deixa de ser uma lista de registos e passa a ser um resumo (por exemplo, número de clientes por distrito e saldo médio), o que torna $S_{trans}$ muito inferior a $S_{orig}$. A agregação sobre grupos muito pequenos pode, no entanto, permitir inferências sobre indivíduos; por isso, a política deve prever um tamanho mínimo de grupo abaixo do qual os valores não são divulgados.
 
-\section{Nível de Informação: Entropia de Shannon}
-\noindent A Entropia de Shannon $H(X)$ mede a incerteza ou o grau de informação contido numa variável aleatória de dados $X$ com possíveis resultados $\{x_1, x_2, \dots, x_n\}$ e probabilidades $P(x_i)$ \cite{shannon1948}:
+\section{Considerações de Segurança}
+\noindent Sendo um ponto obrigatório de passagem entre clientes e backend, o middleware é também um alvo e um potencial ponto único de falha. A conceção deve, por isso, contemplar: comunicações protegidas por TLS entre todos os componentes; o backend acessível apenas a partir do middleware, para que não possa ser contornado; validação da assinatura e da validade dos tokens; gestão das chaves fora do código-fonte; registos sem dados pessoais; e um comportamento seguro em caso de erro, em que uma falha na política ou na transformação resulta em recusa da resposta e não na devolução do payload original.
 
-\begin{equation}
-H(X) = - \sum_{i=1}^{n} P(x_i) \log_2 P(x_i) \label{eqn:entropia}
-\end{equation}
-
-\noindent Quando o middleware aplica técnicas de mascaragem dinâmica, pseudonimização ou eliminação de campos sensíveis para os perfis de menor privilégio (ex.: Analista ou Público), a variabilidade e incerteza associadas aos dados revelados altera-se, permitindo quantificar formalmente a redução de informação exposta.
-
-\section{Taxa de Redução de Payload ($\Delta D$)}
-\noindent A taxa de redução do tamanho dos dados transmitidos na rede ($\Delta D$) quantifica a eficiência do esquema tipo PADRES em termos de poupança de largura de banda. Sejam $S_{orig}$ o tamanho do payload original em bytes e $S_{trans}$ o tamanho do payload transformado entregue ao cliente:
-
-\begin{equation}
-\Delta D = \left( 1 - \frac{S_{trans}}{S_{orig}} \right) \times 100\% \label{eqn:reducao_dados}
-\end{equation}
-
-\noindent A equação (\ref{eqn:reducao_dados}) demonstra a percentagem de carga útil omitida ou agregada. No perfil Público/Terceiros, prevê-se que $S_{trans} \ll S_{orig}$, resultando numa taxa $\Delta D$ elevada.
-
-\chapter{Arquitetura Proposta para o Middleware}
-\noindent O sistema atua como um proxy de segurança em Python intercetando pedidos entre clientes e serviços de backend.
-
-\section{Perfis de Acesso Adaptativos}
-\noindent O middleware processa as respostas dinamicamente segundo três perfis principais:
+\section{Tecnologias e Plano de Avaliação}
+\noindent O protótipo será desenvolvido em Python com FastAPI (ou Flask), recorrendo a um cliente HTTP para o encaminhamento e a um backend de teste com dados sintéticos, evitando a utilização de dados pessoais reais. A avaliação compara dois cenários, acesso direto ao backend e acesso através do middleware, para cada um dos perfis, medindo:
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Perfil Administrador:} Recebe o conjunto de dados completo com permissões integrais de administração.
-    \item \textbf{Perfil Operacional / Analista:} Recebe os dados com mascaragem automática e pseudonimização de atributos confidenciais.
-    \item \textbf{Perfil Público / Terceiros:} Recebe apenas dados agregados e métricas consolidadas, minimizando o payload enviado.
+    \item \textbf{Correção funcional:} cada perfil recebe exatamente os campos e as transformações previstos na política, e pedidos não autorizados são rejeitados;
+    \item \textbf{Latência:} tempo de resposta médio e percentis (p50, p95) com e sem middleware;
+    \item \textbf{Recursos:} consumo de CPU e memória do processo do middleware sob carga;
+    \item \textbf{Payload e informação:} $S_{orig}$, $S_{trans}$ e $\Delta D$ por perfil, e a entropia $H(X)$ dos atributos expostos (equação \ref{eqn:entropia}).
 \end{itemize}
 
 \chapter{Conclusões e Trabalhos Futuros}
-\noindent A formalização teórica apresentada neste relatório valida a viabilidade de combinar o controlo adaptativo por perfis (PRIPRO) com o esquema de redução de dados consciente da privacidade (PADRES). Como trabalhos futuros no âmbito da Parte 2 do projeto, proceder-se-á à implementação do protótipo em Python recorrendo às frameworks FastAPI/Flask, desenvolvendo scripts de benchmarking para medir latência (ms), consumo de CPU e memória.
+\noindent Este relatório apresentou a fundamentação teórica de um middleware adaptativo de privacidade para APIs REST, que adapta o conteúdo das respostas ao perfil do consumidor em vez de se limitar a permitir ou negar o acesso. Foram enquadrados os requisitos relevantes do RGPD, em particular a minimização dos dados, a proteção de dados desde a conceção e a pseudonimização, e da Diretiva NIS2, no que respeita à gestão de riscos e à resiliência dos sistemas. A análise do estado da arte permitiu posicionar a proposta face ao controlo de acesso tradicional e aos modelos PRIPRO e PADRES, dos quais se adotam, respetivamente, a gestão de perfis de privacidade e a redução de dados consciente da privacidade.
+
+\noindent No plano matemático, foram formalizadas duas métricas complementares. A Entropia de Shannon $H(X)$ (equação \ref{eqn:entropia}) permite quantificar a informação contida nos atributos revelados antes e depois da intervenção do middleware, servindo também de critério para decidir quando aplicar pseudonimização, anonimização ou supressão. A taxa de redução do payload $\Delta D$ (equação \ref{eqn:reducao_dados}) quantifica a diminuição dos dados transmitidos e não é um valor fixo: depende do perfil do recetor, da criticidade dos dados e do nível de risco do contexto. As duas métricas foram integradas numa função de decisão adaptativa, formulada como um problema de otimização que maximiza o ganho de privacidade $\mathcal{P}(\Delta D, H(X))$ sujeito a uma utilidade mínima $U \ge U_{min}$. Quando o risco do contexto $R(t)$ ultrapassa um patamar crítico, o middleware intensifica as transformações; em ambiente confiável, preserva maior fidelidade do payload.
+
+\noindent Por fim, foi proposta uma arquitetura modular que concretiza esta formulação, com separação entre autenticação, motor de políticas e transformadores, políticas explícitas por perfil, omissão por defeito dos campos não previstos e recolha das métricas necessárias para calcular $H(X)$ e $\Delta D$ em cada pedido.
+
+\noindent A proposta tem limitações que importa reconhecer. As métricas caracterizam o comportamento do protótipo, mas não demonstram, por si só, conformidade regulatória; a mascaragem e a pseudonimização não equivalem a anonimização; e a introdução de uma camada intermédia acrescenta latência e um novo componente que tem de ser protegido. Além disso, a função de risco $R(t)$, a medida de utilidade $U$ e o limiar $U_{min}$ foram definidos a nível conceptual, e a sua concretização depende do cenário de aplicação. A validade da abordagem terá, por isso, de ser avaliada experimentalmente.
+
+\noindent Como trabalho futuro, no âmbito da Parte 2 do projeto, será implementado o protótipo em Python com FastAPI/Flask, juntamente com um backend de teste com dados sintéticos e políticas para os três perfis. Serão desenvolvidos testes funcionais e scripts de benchmarking para comparar o acesso com e sem middleware em termos de latência, consumo de CPU e memória, $\Delta D$ e entropia dos dados expostos. Como extensões possíveis, identificam-se a concretização da função de risco do contexto e da medida de utilidade a partir de atributos observáveis (por exemplo, finalidade declarada, horário ou origem do pedido), a aplicação de técnicas como o $k$-anonimato ou a privacidade diferencial aos dados agregados, e a cache de respostas transformadas para reduzir o custo introduzido pelo middleware.
 
 \renewcommand{\bibname}{Referências Bibliográficas}
 \bibliographystyle{unsrt}
