@@ -1,0 +1,50 @@
+
+\chapter{Formalização Matemática}
+\noindent Esta secção estabelece o rigor matemático necessário para modelar, quantificar e otimizar o comportamento de um middleware de privacidade, garantindo a conformidade com os princípios de minimização de dados e proteção rigorosa da informação. Para avaliar de forma rigorosa o impacto do middleware tanto ao nível da privacidade como ao nível da eficiência da rede, são utilizadas duas métricas matemáticas fundamentais.
+
+\section{Nível de Informação: Entropia de Shannon}
+\noindent A Entropia de Shannon $H(X)$ mede a incerteza ou o grau de informação contido numa variável aleatória de dados $X$ com possíveis resultados $\{x_1, x_2, \dots, x_n\}$ e probabilidades $P(x_i)$ \cite{shannon1948}:
+
+\begin{equation}
+H(X) = - \sum_{i=1}^{n} P(x_i) \log_2 P(x_i) \label{eqn:entropia}
+\end{equation}
+
+\noindent Quando o middleware aplica técnicas de mascaragem dinâmica, pseudonimização ou eliminação de campos sensíveis para os perfis de menor privilégio (ex.: Analista ou Público), a variabilidade e incerteza associadas aos dados revelados altera-se, permitindo quantificar formalmente a redução de informação exposta.
+
+\section{Aplicação no Middleware}
+\noindent 	A entropia quantifica a quantidade de informação útil ou a surpresa associada aos dados antes e depois da intervenção do middleware. 
+Valores elevados de entropia indicam maior dispersão ou imprevisibilidade dos dados (maior riqueza informativa, mas também maior risco de exposição de dados não estruturados).
+O middleware adaptativo utiliza limiares de entropia para decidir dinamicamente quando aplicar técnicas de anonimização, pseudonimização ou supressão, reduzindo o valor informático de campos sensíveis para salvaguardar a privacidade do titular sem comprometer a integridade operacional do sistema.
+
+
+\section{Taxa de Redução de Payload ($\Delta D$)}
+\noindent A taxa de redução do tamanho dos dados transmitidos na rede ($\Delta D$) quantifica a eficiência do esquema tipo PADRES em termos de poupança de largura de banda. Sejam $S_{orig}$ o tamanho do payload original em bytes e $S_{trans}$ o tamanho do payload transformado entregue ao cliente:
+
+\section{Definição Formal: }
+\noindent Considere-se o tamanho original do payload de dados em bits ou bytes antes do processamento como $S_{orig}$  e o tamanho do payload resultante após a aplicação das políticas de filtragem, truncagem ou anonimização pelo middleware como $S_{trans}$ . A taxa de redução de payload ($\Delta D$) é expressa percentualmente por:
+\begin{equation}
+\Delta D = \left( 1 - \frac{S_{trans}}{S_{orig}} \right) \times 100\% \label{eqn:reducao_dados}
+\end{equation}
+
+\section {Dinâmica Adaptativa:}
+\noindent 	O parâmetro ($\Delta D$  não é estático; ele adapta-se com base no contexto de segurança, no nível de confiança do recetor, na criticidade dos dados e no estado de ameaça detetado pelo sistema.
+Um nível de risco mais elevado aciona políticas mais restritivas no middleware, maximizando ($\Delta D$ através da eliminação de metadados redundantes ou campos identificadores secundários.
+Esta métrica serve como indicador de desempenho essencial para comprovar a eficiência do sistema perante requisitos regulatórios e de otimização de largura de banda.
+
+\section{Função de Utilidade e Tomada de Decisão Adaptativa}
+\noindent O middleware não se limita a aplicar transformações estáticas; ele ajusta o seu comportamento em tempo real com base no contexto de risco e nos requisitos operacionais.
+
+\begin{itemize}[leftmargin=*]
+      \item \textbf{Modelação do Contexto de Risco :} uma função que avalia o nível de ameaça ou a sensibilidade do contexto de transmissão num dado momento t, agregando fatores como a localização da rede, o perfil do utilizador e a classificação da informação.
+      \item \textbf{Otimização do Equilíbrio (Trade-off) entre Privacidade e Utilidade: }objetivo do middleware é maximizar a privacidade do utilizador (através da redução de entropia e maximização de ($\Delta D$) mantendo uma utilidade aceitável dos dados . Isto pode ser formulado como um problema de otimização restrita:
+\end{itemize}
+
+\begin{equation}
+    \max \mathcal{P}(\Delta D, H(X)) \quad \text{sujeito a} \quad U \ge U_{\text{min}}
+\end{equation}
+\noindent Onde {P} representa o ganho de privacidade e {U} é o limiar mínimo de utilidade necessário para que o sistema de informação recetor execute as suas funções sem falhas operacionais.
+\begin{itemize}[leftmargin=*]
+          \item \textbf{Mecanismo de Decisão Dinâmica:} 	Quando R(t) ultrapassa um determinado patamar crítico, o middleware reduz o peso da utilidade e intensifica as políticas de anonimização e supressão de atributos.
+Quando o ambiente é seguro e confiável, o sistema reduz o impacto da transformação, preservando a fidelidade original do payload.
+
+\end{itemize}
