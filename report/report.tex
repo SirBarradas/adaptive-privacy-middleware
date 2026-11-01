@@ -102,7 +102,18 @@
 \noindent A integração entre sistemas de informação através de APIs REST faz circular respostas que contêm frequentemente mais dados pessoais do que os necessários para cada destinatário. Os mecanismos de autorização tradicionais decidem se um pedido pode aceder a um recurso, mas não adaptam o conteúdo devolvido. Este relatório apresenta a fundamentação teórica de um middleware/proxy de privacidade em Python que, colocado entre os clientes e os serviços de backend, identifica o perfil associado a cada pedido e transforma a resposta antes de a entregar. Inspirada nos modelos PRIPRO e PADRES, a proposta define três perfis (Administrador, Operacional/Analista e Público/Terceiros) e aplica, consoante o perfil, ações de omissão, mascaragem, pseudonimização e agregação de atributos. O trabalho enquadra a proposta no RGPD e na Diretiva NIS2, compara-a com abordagens relacionadas, formaliza métricas para a informação exposta (Entropia de Shannon) e para a redução do payload ($\Delta D$), e descreve a arquitetura e o plano de avaliação do protótipo a desenvolver na Parte 2.
 
 \vspace{0.5cm}
-\noindent\textbf{Palavras-chave:} privacidade, middleware, controlo de acesso adaptativo, minimização de dados, pseudonimização, RGPD, NIS2.
+\noindent\textbf{Palavras-chave:} PRIPRO/PRIADA, PADRES, Gestão de Utilizadores, Minimização de Dados, NIS2.
+
+\vspace{0.5cm}
+\noindent\textbf{Glossário} \\ API - Interface de Programação de Aplicações.
+
+\noindent Ubíquo - Que está presente ou pode ser acedido em qualquer lugar, através de diferentes dispositivos e ambientes.
+
+\noindent PRIPRO - Privacy Profiles: perfis de privacidade que definem as preferências e os requisitos de privacidade dos utilizadores.
+
+\noindent PRIADA - Privacy Adaptation: adaptação das respostas ou dos dados disponibilizados de acordo com os requisitos e perfis de privacidade.
+
+\noindent minTAP - Practical Data Access Minimization in Trigger-Action Platforms: abordagem para minimizar o acesso a dados pessoais em plataformas baseadas em relações de gatilho-ação.
 
 \renewcommand{\contentsname}{Índice}
 \tableofcontents
@@ -297,6 +308,58 @@ minTAP
 \end{table}
 %%
 
+
+\chapter{Formalização Matemática}
+\noindent Esta secção estabelece o rigor matemático necessário para modelar, quantificar e otimizar o comportamento de um middleware de privacidade, garantindo a conformidade com os princípios de minimização de dados e proteção rigorosa da informação. Para avaliar de forma rigorosa o impacto do middleware tanto ao nível da privacidade como ao nível da eficiência da rede, são utilizadas duas métricas matemáticas fundamentais.
+
+\section{Nível de Informação: Entropia de Shannon}
+\noindent A Entropia de Shannon $H(X)$ mede a incerteza ou o grau de informação contido numa variável aleatória de dados $X$ com possíveis resultados $\{x_1, x_2, \dots, x_n\}$ e probabilidades $P(x_i)$ \cite{shannon1948}:
+
+\begin{equation}
+H(X) = - \sum_{i=1}^{n} P(x_i) \log_2 P(x_i) \label{eqn:entropia}
+\end{equation}
+
+\noindent Quando o middleware aplica técnicas de mascaragem dinâmica, pseudonimização ou eliminação de campos sensíveis para os perfis de menor privilégio (ex.: Analista ou Público), a variabilidade e incerteza associadas aos dados revelados altera-se, permitindo quantificar formalmente a redução de informação exposta.
+
+\section{Aplicação no Middleware}
+\noindent 	A entropia quantifica a quantidade de informação útil ou a surpresa associada aos dados antes e depois da intervenção do middleware. 
+Valores elevados de entropia indicam maior dispersão ou imprevisibilidade dos dados (maior riqueza informativa, mas também maior risco de exposição de dados não estruturados).
+O middleware adaptativo utiliza limiares de entropia para decidir dinamicamente quando aplicar técnicas de anonimização, pseudonimização ou supressão, reduzindo o valor informático de campos sensíveis para salvaguardar a privacidade do titular sem comprometer a integridade operacional do sistema.
+
+
+\section{Taxa de Redução de Payload ($\Delta D$)}
+\noindent A taxa de redução do tamanho dos dados transmitidos na rede ($\Delta D$) quantifica a eficiência do esquema tipo PADRES em termos de poupança de largura de banda. Sejam $S_{orig}$ o tamanho do payload original em bytes e $S_{trans}$ o tamanho do payload transformado entregue ao cliente:
+
+\section{Definição Formal: }
+\noindent Considere-se o tamanho original do payload de dados em bits ou bytes antes do processamento como $S_{orig}$  e o tamanho do payload resultante após a aplicação das políticas de filtragem, truncagem ou anonimização pelo middleware como $S_{trans}$ . A taxa de redução de payload ($\Delta D$) é expressa percentualmente por:
+\begin{equation}
+\Delta D = \left( 1 - \frac{S_{trans}}{S_{orig}} \right) \times 100\% \label{eqn:reducao_dados}
+\end{equation}
+
+\section {Dinâmica Adaptativa:}
+\noindent 	O parâmetro ($\Delta D$  não é estático; ele adapta-se com base no contexto de segurança, no nível de confiança do recetor, na criticidade dos dados e no estado de ameaça detetado pelo sistema.
+Um nível de risco mais elevado aciona políticas mais restritivas no middleware, maximizando ($\Delta D$ através da eliminação de metadados redundantes ou campos identificadores secundários.
+Esta métrica serve como indicador de desempenho essencial para comprovar a eficiência do sistema perante requisitos regulatórios e de otimização de largura de banda.
+
+\section{Função de Utilidade e Tomada de Decisão Adaptativa}
+\noindent O middleware não se limita a aplicar transformações estáticas; ele ajusta o seu comportamento em tempo real com base no contexto de risco e nos requisitos operacionais.
+
+\begin{itemize}[leftmargin=*]
+      \item \textbf{Modelação do Contexto de Risco :} uma função que avalia o nível de ameaça ou a sensibilidade do contexto de transmissão num dado momento t, agregando fatores como a localização da rede, o perfil do utilizador e a classificação da informação.
+      \item \textbf{Otimização do Equilíbrio (Trade-off) entre Privacidade e Utilidade: }objetivo do middleware é maximizar a privacidade do utilizador (através da redução de entropia e maximização de ($\Delta D$) mantendo uma utilidade aceitável dos dados . Isto pode ser formulado como um problema de otimização restrita:
+\end{itemize}
+
+\begin{equation}
+    \max \mathcal{P}(\Delta D, H(X)) \quad \text{sujeito a} \quad U \ge U_{\text{min}}
+\end{equation}
+\noindent Onde {P} representa o ganho de privacidade e {U} é o limiar mínimo de utilidade necessário para que o sistema de informação recetor execute as suas funções sem falhas operacionais.
+\begin{itemize}[leftmargin=*]
+          \item \textbf{Mecanismo de Decisão Dinâmica:} 	Quando R(t) ultrapassa um determinado patamar crítico, o middleware reduz o peso da utilidade e intensifica as políticas de anonimização e supressão de atributos.
+Quando o ambiente é seguro e confiável, o sistema reduz o impacto da transformação, preservando a fidelidade original do payload.
+
+\end{itemize}
+
+
 \chapter{Arquitetura Proposta para o Middleware}
 \noindent O sistema proposto atua como um proxy reverso de privacidade, implementado em Python, colocado entre os clientes e os serviços de backend. Os clientes deixam de comunicar diretamente com a API original: cada pedido é recebido pelo middleware, que valida a credencial, determina o perfil, reencaminha o pedido ao backend e transforma a resposta segundo a política associada a esse perfil antes de a devolver. O backend não necessita de ser alterado, o que permite aplicar a abordagem a serviços já existentes. A Figura \ref{fig:arquitetura} apresenta a visão geral da arquitetura.
 
@@ -375,15 +438,18 @@ minTAP
 \end{itemize}
 
 \chapter{Conclusões e Trabalhos Futuros}
-\noindent Este relatório apresentou a fundamentação teórica de um middleware adaptativo de privacidade para APIs REST, que adapta o conteúdo das respostas ao perfil do consumidor em vez de se limitar a permitir ou negar o acesso. Foram enquadrados os requisitos relevantes do RGPD, em particular a minimização dos dados, a proteção de dados desde a conceção e a pseudonimização, e da Diretiva NIS2, no que respeita à gestão de riscos e à resiliência dos sistemas. A análise do estado da arte permitiu posicionar a proposta face ao controlo de acesso tradicional e aos modelos PRIPRO e PADRES, dos quais se adotam, respetivamente, a gestão de perfis de privacidade e a redução de dados consciente da privacidade.
+
+\noindent Este relatório apresentou a fundamentação teórica de um middleware adaptativo de privacidade para APIs REST, que adapta o conteúdo das respostas ao perfil do consumidor em vez de se limitar a permitir ou negar o acesso. Foram enquadrados os requisitos relevantes do RGPD, em particular a minimização dos dados, a proteção de dados desde a conceção e a pseudonimização, e da Diretiva NIS2, no que respeita à gestão de riscos e à resiliência dos sistemas. A análise do estado da arte permitiu posicionar a proposta face ao controlo de acesso tradicional e aos modelos PRIPRO/PRIADA e PADRES, dos quais se retiram, respetivamente, a gestão dinâmica de perfis e a adaptação contextual, bem como o enquadramento de avaliação regulamentar e de segurança.
+
+\noindent A revisão de literatura permitiu ainda identificar outras abordagens relevantes à minimização de dados, nomeadamente o Janus e o minTAP. Enquanto o Janus aplica mecanismos configuráveis de redução de informação ao nível dos atributos disponibilizados por APIs GraphQL, o minTAP procura limitar o acesso excessivo a dados e serviços em plataformas de automação. Estes trabalhos demonstram a viabilidade da aplicação de políticas de minimização diretamente às interfaces de acesso aos dados, constituindo uma referência para a abordagem proposta. A principal diferenciação do middleware consiste em reunir a gestão de perfis, a adaptação contextual e a transformação das respostas numa camada intermédia direcionada a APIs HTTP/REST.
 
 \noindent No plano matemático, foram formalizadas duas métricas complementares. A Entropia de Shannon $H(X)$ (equação \ref{eqn:entropia}) permite quantificar a informação contida nos atributos revelados antes e depois da intervenção do middleware, servindo também de critério para decidir quando aplicar pseudonimização, anonimização ou supressão. A taxa de redução do payload $\Delta D$ (equação \ref{eqn:reducao_dados}) quantifica a diminuição dos dados transmitidos e não é um valor fixo: depende do perfil do recetor, da criticidade dos dados e do nível de risco do contexto. As duas métricas foram integradas numa função de decisão adaptativa, formulada como um problema de otimização que maximiza o ganho de privacidade $\mathcal{P}(\Delta D, H(X))$ sujeito a uma utilidade mínima $U \ge U_{min}$. Quando o risco do contexto $R(t)$ ultrapassa um patamar crítico, o middleware intensifica as transformações; em ambiente confiável, preserva maior fidelidade do payload.
 
-\noindent Por fim, foi proposta uma arquitetura modular que concretiza esta formulação, com separação entre autenticação, motor de políticas e transformadores, políticas explícitas por perfil, omissão por defeito dos campos não previstos e recolha das métricas necessárias para calcular $H(X)$ e $\Delta D$ em cada pedido.
+\noindent Por fim, foi proposta uma arquitetura modular que concretiza esta formulação, com separação entre autenticação, motor de políticas e transformadores, políticas explícitas por perfil, omissão por defeito dos campos não previstos e recolha das métricas necessárias para calcular $H(X)$ e $\Delta D$ em cada pedido. As transformações previstas incluem a seleção de campos, a mascaragem ou pseudonimização de atributos e a agregação de informação, permitindo aplicar diferentes níveis de proteção aos mesmos recursos em função do perfil e do contexto do pedido.
 
 \noindent A proposta tem limitações que importa reconhecer. As métricas caracterizam o comportamento do protótipo, mas não demonstram, por si só, conformidade regulatória; a mascaragem e a pseudonimização não equivalem a anonimização; e a introdução de uma camada intermédia acrescenta latência e um novo componente que tem de ser protegido. Além disso, a função de risco $R(t)$, a medida de utilidade $U$ e o limiar $U_{min}$ foram definidos a nível conceptual, e a sua concretização depende do cenário de aplicação. A validade da abordagem terá, por isso, de ser avaliada experimentalmente.
 
-\noindent Como trabalho futuro, no âmbito da Parte 2 do projeto, será implementado o protótipo em Python com FastAPI/Flask, juntamente com um backend de teste com dados sintéticos e políticas para os três perfis. Serão desenvolvidos testes funcionais e scripts de benchmarking para comparar o acesso com e sem middleware em termos de latência, consumo de CPU e memória, $\Delta D$ e entropia dos dados expostos. Como extensões possíveis, identificam-se a concretização da função de risco do contexto e da medida de utilidade a partir de atributos observáveis (por exemplo, finalidade declarada, horário ou origem do pedido), a aplicação de técnicas como o $k$-anonimato ou a privacidade diferencial aos dados agregados, e a cache de respostas transformadas para reduzir o custo introduzido pelo middleware.
+\noindent Como trabalho futuro, no âmbito da Parte 2 do projeto, será implementado o protótipo em Python com FastAPI/Flask, juntamente com um backend de teste com dados sintéticos e políticas para os três perfis. Serão desenvolvidos testes funcionais e scripts de benchmarking para comparar o acesso com e sem middleware em termos de latência, consumo de CPU e memória, $\Delta D$ e entropia dos dados expostos. Esta avaliação permitirá analisar não só a eficácia das transformações aplicadas, mas também o compromisso entre a redução da informação transmitida, a preservação da utilidade funcional das respostas e o custo computacional introduzido. Como extensões possíveis, identificam-se a concretização da função de risco do contexto e da medida de utilidade a partir de atributos observáveis (por exemplo, finalidade declarada, horário ou origem do pedido), a aplicação de técnicas como o $k$-anonimato ou a privacidade diferencial aos dados agregados, e a cache de respostas transformadas para reduzir o custo introduzido pelo middleware.
 
 \renewcommand{\bibname}{Referências Bibliográficas}
 \bibliographystyle{unsrt}
