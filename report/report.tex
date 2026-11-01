@@ -166,54 +166,130 @@
 \noindent Deste modo, o RGPD orienta sobretudo a necessidade e a forma do tratamento de dados pessoais, enquanto a NIS2 enquadra a gestão de riscos de cibersegurança e a resiliência das entidades abrangidas. A arquitetura proposta pode contribuir para objetivos relacionados com ambos, mas a avaliação de conformidade exigiria analisar o tratamento completo, os responsáveis envolvidos, o contexto operacional e as medidas organizacionais e técnicas aplicáveis.
 
 \chapter{Estado da Arte e Trabalhos Relacionados}
-\noindent A literatura científica tem proposto diversos esquemas para assegurar a privacidade e a eficiência na transmissão de dados.
 
-\section{Análise dos Modelos Base}
+\section{Modelos Base}
 \noindent A proposta deste projeto baseia-se na fusão e adaptação dos seguintes modelos de referência:
-\begin{itemize}[leftmargin=*]
-    \item \textbf{Modelo PRIPRO / PRIADA:} Focado na gestão de perfis de privacidade do utilizador e na adaptação dinâmica da informação com base em permissões e contexto \cite{cesconetto2020}.
-    \item \textbf{Modelo PADRES:} Propõe esquemas de redução de dados e encriptação consciente da privacidade (\textit{privacy-aware data reduction and encryption scheme}), promovendo a remoção ou agregação de atributos secundários para diminuir o tamanho dos dados transmitidos na rede \cite{pereira2022}.
+\begin{itemize}
+    \item \text{Modelo PRIPRO / PRIADA}% Focado na gestão de perfis de privacidade do utilizador e na adaptação dinâmica da informação com base em permissões e contexto \cite{cesconetto2020}.
+    \item \text{Modelo PADRES}% Propõe esquemas de redução de dados e encriptação consciente da privacidade (\textit{privacy-aware data reduction and encryption scheme}), promovendo a remoção ou agregação de atributos secundários para diminuir o tamanho dos dados transmitidos na rede \cite{pereira2022}.
 \end{itemize}
 
-\section{Análise Comparativa de Trabalhos Relacionados}
-\noindent A Tabela \ref{tab:trabalhos_relacionados} sistematiza a comparação entre abordagens tradicionais, os modelos base da literatura e o middleware adaptativo proposto neste trabalho.
+\section{Análise dos Modelos}
+\subsection{Modelo PRIPRO / PRIADA}
 
-\begin{table}[h!]
+O modelo PRIPRO (\textit{PRIvacy PROfiles}) integra a arquitetura UbiPri (\textit{Ubiquitous Privacy}), desenvolvida para a gestão e controlo da privacidade em ambientes ubíquos. Esta arquitetura encontra-se organizada em módulos independentes, responsáveis por diferentes dimensões da gestão da privacidade \cite{leithardt2015,cesconetto2020,prichain2019}.
+
+No contexto desta arquitetura, o módulo PRIPRO é responsável pela gestão dos perfis dos utilizadores, permitindo associar diferentes permissões e restrições aos recursos e serviços disponíveis. O objetivo é garantir que o acesso à informação e aos recursos do ambiente respeita as preferências e condições estabelecidas para cada perfil.
+
+Uma das características relevantes do PRIPRO é a possibilidade de evolução dinâmica dos perfis. A abordagem considera a frequência com que um utilizador interage com determinado ambiente para gerir a progressão ou regressão do seu perfil. Esta evolução é suportada por uma taxonomia de métricas, parâmetros e critérios hierárquicos, permitindo adaptar as permissões às características da interação \cite{cesconetto2020}.
+
+Complementarmente, o módulo PRIADA (\textit{PRIvacy ADAptation}) assume a responsabilidade pela gestão e controlo da adaptação, tratando informação relacionada com a adaptação de software e hardware no ambiente ubíquo. Enquanto o PRIPRO se concentra na gestão dos perfis e das respetivas permissões, o PRIADA está associado à adaptação do comportamento do sistema em função das condições identificadas. \cite{prichain2019,cesconetto2020,lopes2020priada}.
+
+O PRIADA foca-se na gestão e adaptação da informação considerando a localização e o contexto da interação entre o indivíduo e o ambiente. O modelo procura determinar as condições de acesso à informação com base nas circunstâncias em que ocorre a interação, evidenciando a importância de considerar o contexto como uma variável na aplicação das políticas de privacidade \cite{lopes2020priada}.
+
+\subsection{Modelo PADRES}
+O PADRES (\textit{Tool for PrivAcy, Data REgulation and Security}), desenvolvido por Pereira, Crocker e Leithardt (2022), é uma ferramenta de código aberto concebida para apoiar a análise da privacidade e segurança de aplicações Web, tendo como principal enquadramento os requisitos do Regulamento Geral sobre a Proteção de Dados (RGPD). A sua motivação está relacionada com a complexidade do processo de avaliação da conformidade regulamentar, que exige a análise de procedimentos organizacionais, aplicações e infraestruturas tecnológicas \cite{pereira2022}.
+
+A ferramenta organiza os principais princípios do RGPD sob a forma de listas de verificação e questionários, cujas respostas são introduzidas manualmente pelo utilizador. Esta abordagem permite sistematizar a avaliação de diferentes aspetos relacionados com o tratamento de dados pessoais, facilitando a identificação de possíveis lacunas relativamente aos requisitos regulamentares. Assim, o PADRES funciona como um instrumento de apoio à análise e à auditoria regulamentar \cite{pereira2022}.
+
+Para complementar a componente regulamentar, o PADRES integra ferramentas externas de análise de segurança, nomeadamente o Nmap, o OWASP ZAP e analisadores de cookies. Os resultados obtidos através destas ferramentas são armazenados e posteriormente combinados com as respostas dos questionários, permitindo gerar um relatório consolidado com sugestões e recomendações. Esta integração procura reunir, num único processo, informação relativa à avaliação da privacidade e à identificação de potenciais vulnerabilidades de segurança nas aplicações analisadas \cite{pereira2022}.
+
+
+\section{Análise Comparativa dos Trabalhos Relacionados}
+\subsection{Trabalhos Relacionados}
+Os trabalhos analisados abordam diferentes dimensões da proteção da privacidade, desde a gestão dos perfis dos utilizadores até à avaliação da conformidade regulamentar das aplicações. O PRIPRO e o PRIADA concentram-se na gestão e adaptação das políticas de privacidade em função dos perfis e do contexto, enquanto o PADRES procura apoiar a identificação de aspetos relacionados com a privacidade e a segurança de aplicações Web. Apesar de partilharem a preocupação com a proteção da informação, os seus objetivos e mecanismos de implementação são distintos \cite{cesconetto2020,lopes2020priada,pereira2022}.
+
+Uma abordagem mais diretamente relacionada com a minimização de dados em interfaces de programação é apresentada por Pallas et al. (2022), através da solução Janus. Este trabalho aborda o problema da disponibilização de informação excessiva por APIs Web, propondo um mecanismo configurável de minimização de dados para APIs GraphQL. A solução permite definir diferentes operações de redução de informação de acordo com os papéis dos consumidores, procurando disponibilizar apenas os atributos necessários a cada pedido. Os autores apresentam ainda uma implementação experimental e uma avaliação do desempenho, demonstrando a viabilidade da aplicação de políticas de minimização diretamente nas interfaces de acesso aos dados \cite{pallas2022janus}.
+
+Outra contribuição relevante é apresentada por Chen et al. (2022), através do sistema minTAP (\textit{Practical Data Access Minimization in Trigger-Action Platforms}). Esta abordagem procura reduzir o acesso excessivo a dados pessoais em plataformas que permitem estabelecer regras de automação entre diferentes serviços. Os autores identificam dois tipos de acesso excessivo: ao nível dos atributos, quando uma aplicação recebe mais campos do que aqueles de que necessita, e ao nível dos serviços, quando lhe são disponibilizadas mais APIs do que as necessárias. Para responder a este problema, o minTAP procura identificar os dados estritamente necessários à execução de cada regra, limitando a informação disponibilizada às aplicações consumidoras \cite{chen2022mintap}.
+
+A análise conjunta destes trabalhos permite identificar duas dimensões complementares. Por um lado, os modelos PRIPRO e PRIADA demonstram a importância de utilizar perfis e informação contextual para determinar as condições de acesso e adaptação. Por outro, as abordagens Janus e minTAP demonstram a possibilidade de aplicar a minimização ao nível dos atributos disponibilizados às aplicações consumidoras. O PADRES acrescenta uma perspetiva de avaliação regulamentar e de segurança, permitindo enquadrar a necessidade de verificar os mecanismos de proteção implementados \cite{cesconetto2020,lopes2020priada,pereira2022,pallas2022janus,chen2022mintap}.
+
+\subsection{Resumo da análise comparativa}
+
+Apesar da existência destas abordagens, a proposta deste projeto procura reunir estas dimensões numa camada intermédia dedicada à adaptação de respostas HTTP/REST. Ao contrário de uma solução centrada exclusivamente na gestão de permissões, pretende-se que o middleware utilize o perfil associado ao pedido para determinar não só se o acesso é permitido, mas também que informação pode ser devolvida. A transformação poderá envolver a seleção de campos, a mascaragem ou pseudonimização de atributos e a agregação de informação, de acordo com as políticas definidas para cada perfil.
+
+Deste modo, pretende-se explorar uma arquitetura que combine a gestão de perfis inspirada no PRIPRO/PRIADA com os princípios de minimização de dados presentes em trabalhos como Janus e minTAP, mantendo o enquadramento regulamentar e de segurança associado ao PADRES. A avaliação experimental permitirá analisar a eficácia funcional das transformações e o respetivo impacto na latência, no consumo de recursos e no volume de dados transmitidos. Esta combinação constitui a principal diferenciação da abordagem proposta relativamente aos trabalhos analisados.
+
+\section{Tabela Comparativa dos Trabalhos Relacionados}
+A Tabela \ref{tab} apresenta uma comparação dos trabalhos analisados na secção anterior, considerando os seus objetivos, mecanismos de proteção, utilização de perfis, adaptação da informação e aplicabilidade ao contexto das APIs. A comparação permite identificar as características já exploradas na literatura e as funcionalidades que se pretende reunir no middleware proposto.
+
+Neste enquadramento, o middleware proposto procura integrar a gestão de perfis com a transformação direta das respostas de APIs REST, permitindo aplicar diferentes níveis de proteção aos mesmos recursos. A sua avaliação experimental permitirá verificar se esta integração consegue reduzir a quantidade de informação transmitida e a exposição de atributos sensíveis, mantendo a utilidade funcional das respostas e introduzindo um custo computacional aceitável.
+
+%%tabela%%
+\begin{table}[H]
 \centering
-\caption{Comparação entre Abordagens de Privacidade e Proteção de Dados}
-\label{tab:trabalhos_relacionados}
-\small
-\setlength{\tabcolsep}{2pt}
-\begin{tabular}{>{\centering\arraybackslash}p{3.8cm}>{\centering\arraybackslash}p{2.5cm}>{\centering\arraybackslash}p{2.5cm}>{\centering\arraybackslash}p{2.5cm}>{\centering\arraybackslash}p{2.5cm}}
+\caption{Comparação dos modelos e trabalhos relacionados}
+\label{tab}
+\renewcommand{\arraystretch}{1.4}
+\setlength{\tabcolsep}{3pt}
+\scriptsize
+
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|p{2.2cm}|p{2cm}|p{2.3cm}|p{1.6cm}|p{2.5cm}|p{2.0cm}|p{2.0cm}|}
 \hline
-\textbf{Modelo / Abordagem} & \shortstack{\textbf{Controlo}\\\textbf{de Acesso}} & \shortstack{\textbf{Mascara-}\\\textbf{gem}} & \shortstack{\textbf{Redução}\\\textbf{($\Delta D$)}} & \shortstack{\textbf{Adaptabili-}\\\textbf{dade}} \\ \hline
-RBAC Tradicional & Estático & Não & Não & Baixa \\
-Modelo PRIPRO & \shortstack{Dinâmico/\\Perfis} & Sim & Parcial & Média \\
-Modelo PADRES & \shortstack{Regras/\\Privacidade} & Sim & Sim & Alta \\
-\shortstack{\textbf{Proposta}\\\textbf{(Middleware)}} & \shortstack{\textbf{Contextual}\\\textbf{Tokens}} & \shortstack{\textbf{Sim}\\\textbf{(Dinam.)}} & \shortstack{\textbf{Sim}\\\textbf{($\Delta D$)}} & \shortstack{\textbf{Alta}\\\textbf{(Tempo Real)}} \\ \hline
-\end{tabular}
+\textbf{Modelo / Abordagem}
+& \centering\textbf{Controlo de Acesso}
+& \centering\textbf{Mascaragem}
+& \centering\textbf{Redução ($\Delta D$)}
+& \centering\textbf{Adaptabilidade}
+& \centering\textbf{Minimização de Dados}
+& \centering\textbf{Âmbito de Aplicação}
+\tabularnewline
+\hline
+
+PRIPRO / PRIADA
+& Perfis e contexto
+& Não especificado
+& Não especificado
+& Dinâmica
+& Não especificada
+& Ambientes ubíquos
+\tabularnewline
+\hline
+
+PADRES
+& Não aplicável
+& Não
+& Não
+& Avaliação e recomendações
+& Não implementada
+& Aplicações Web
+\tabularnewline
+\hline
+
+Janus
+& Baseado em papéis
+& Não especificado
+& Sim
+& Configurável
+& Seleção de atributos
+& APIs GraphQL
+\tabularnewline
+\hline
+
+minTAP
+& Dados e serviços
+& Não especificado
+& Sim
+& Dependente das regras
+& Atributos e serviços
+& Plataformas Trigger-Action
+\tabularnewline
+\hline
+
+\textbf{Proposta (Middleware)}
+& \textbf{Contextual / Perfis}
+& \textbf{Sim}
+& \textbf{Sim}
+& \textbf{Dinâmica}
+& \textbf{Seleção, mascaragem e agregação}
+& \textbf{APIs: HTTP e REST}
+\tabularnewline
+\hline
+\end{tabular}}
 \end{table}
-
-\chapter{Formalização Matemática}
-\noindent Para avaliar de forma rigorosa o impacto do middleware tanto ao nível da privacidade como ao nível da eficiência da rede, são utilizadas duas métricas matemáticas fundamentais.
-
-\section{Nível de Informação: Entropia de Shannon}
-\noindent A Entropia de Shannon $H(X)$ mede a incerteza ou o grau de informação contido numa variável aleatória de dados $X$ com possíveis resultados $\{x_1, x_2, \dots, x_n\}$ e probabilidades $P(x_i)$ \cite{shannon1948}:
-
-\begin{equation}
-H(X) = - \sum_{i=1}^{n} P(x_i) \log_2 P(x_i) \label{eqn:entropia}
-\end{equation}
-
-\noindent Quando o middleware aplica técnicas de mascaragem dinâmica, pseudonimização ou eliminação de campos sensíveis para os perfis de menor privilégio (ex.: Analista ou Público), a variabilidade e incerteza associadas aos dados revelados altera-se, permitindo quantificar formalmente a redução de informação exposta.
-
-\section{Taxa de Redução de Payload ($\Delta D$)}
-\noindent A taxa de redução do tamanho dos dados transmitidos na rede ($\Delta D$) quantifica a eficiência do esquema tipo PADRES em termos de poupança de largura de banda. Sejam $S_{orig}$ o tamanho do payload original em bytes e $S_{trans}$ o tamanho do payload transformado entregue ao cliente:
-
-\begin{equation}
-\Delta D = \left( 1 - \frac{S_{trans}}{S_{orig}} \right) \times 100\% \label{eqn:reducao_dados}
-\end{equation}
-
-\noindent A equação (\ref{eqn:reducao_dados}) demonstra a percentagem de carga útil omitida ou agregada. No perfil Público/Terceiros, prevê-se que $S_{trans} \ll S_{orig}$, resultando numa taxa $\Delta D$ elevada.
+%%
 
 \chapter{Arquitetura Proposta para o Middleware}
 \noindent O sistema atua como um proxy de segurança em Python intercetando pedidos entre clientes e serviços de backend.
