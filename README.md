@@ -21,6 +21,32 @@ Middleware/proxy de segurança em Python que se coloca entre os clientes e um ba
 | [`report/part2/`](report/part2/) | Relatório da Parte 2 (prática), em LaTeX |
 | [`PLANO_PARTE2.md`](PLANO_PARTE2.md) | Plano de tarefas da Parte 2 (prática) |
 
-## Instalação e execução
+## Instalação
+
+Requer **Python 3.13**. A partir da raiz do repositório:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1        # Linux/macOS: source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+| Pacote | Uso |
+|---|---|
+| FastAPI + Uvicorn | API do backend de teste e do middleware |
+| httpx | Encaminhamento middleware → backend; clientes de teste e benchmark |
+| PyJWT | Validação dos tokens e extração do perfil |
+| PyYAML | Leitura dos ficheiros de políticas |
+| Faker | Geração de dados sintéticos |
+| pytest | Testes funcionais e de segurança |
+| psutil | CPU e memória do middleware nos benchmarks |
+
+## Execução
 
 *A completar nas fases seguintes (ver [`PLANO_PARTE2.md`](PLANO_PARTE2.md)).*
+
+## Testes
+
+```powershell
+pytest
+```

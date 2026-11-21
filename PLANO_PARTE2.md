@@ -40,8 +40,8 @@ Segurança de Redes e Sistemas de Informação – ISCTE
 ## Fase 0 – Preparação
 
 - [x] **1.** Criar o repositório GitHub com a estrutura `backend/`, `middleware/`, `policies/`, `tests/`, `benchmarks/`, `docs/` e um README inicial.
-- [ ] **2.** Fixar o ambiente: versão do Python, FastAPI (ou Flask), `httpx`, `pytest`, `psutil`, `PyJWT` e ficheiro `requirements.txt`.
-- [ ] **3.** Dividir as tarefas pelos quatro elementos e definir a convenção de branches e de mensagens de commit.
+- [x] **2.** Fixar o ambiente: versão do Python, FastAPI (ou Flask), `httpx`, `pytest`, `psutil`, `PyJWT` e ficheiro `requirements.txt`.
+
 
 ## Fase 1 – Definições (antes de programar)
 

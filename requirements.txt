@@ -1,0 +1,24 @@
+# Python 3.13
+# Instalar com: pip install -r requirements.txt
+
+# API (backend de teste e middleware)
+fastapi==0.165.0
+uvicorn==0.54.0
+
+# Encaminhamento HTTP (middleware -> backend) e clientes de teste/benchmark
+httpx==0.28.1
+
+# Autenticação (tokens JWT)
+PyJWT==2.15.1
+
+# Políticas (YAML)
+PyYAML==6.0.4
+
+# Dados sintéticos
+Faker==40.63.0
+
+# Testes
+pytest==9.2.0
+
+# Métricas de CPU e memória nos benchmarks
+psutil==7.2.2
