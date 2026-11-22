@@ -7,6 +7,16 @@ Middleware/proxy de segurança em Python que se coloca entre os clientes e um ba
 
 > ⚠️ O projeto usa apenas **dados sintéticos**.
 
+## Cenário
+
+O **Banco Exemplo** (fictício) guarda o registo dos seus clientes num sistema central (o backend). Três tipos de consumidores pedem os mesmos dados, e o middleware entrega a cada um só o que lhe compete:
+
+- **Administrador** (gestor de conta): registo completo;
+- **Analista** (equipa de risco/marketing): registos sem nome nem morada, com identificadores pseudonimizados e campos sensíveis mascarados ou generalizados;
+- **Público** (parceiros, estatísticas): apenas totais agregados, sem grupos com menos de `k` clientes.
+
+Detalhes em [`docs/recurso-clientes.md`](docs/recurso-clientes.md).
+
 ## Estrutura do repositório
 
 | Pasta | Conteúdo |
@@ -38,13 +48,30 @@ pip install -r requirements.txt
 | httpx | Encaminhamento middleware → backend; clientes de teste e benchmark |
 | PyJWT | Validação dos tokens e extração do perfil |
 | PyYAML | Leitura dos ficheiros de políticas |
+| python-dotenv | Leitura dos segredos locais do `.env` |
 | Faker | Geração de dados sintéticos |
 | pytest | Testes funcionais e de segurança |
 | psutil | CPU e memória do middleware nos benchmarks |
 
+## Configuração
+
+Copiar o modelo e substituir os valores por segredos aleatórios (`python -c "import secrets; print(secrets.token_hex(32))"`):
+
+```powershell
+copy .env.example .env
+```
+
+O `.env` nunca vai para o Git.
+
 ## Execução
 
-*A completar nas fases seguintes (ver [`PLANO_PARTE2.md`](PLANO_PARTE2.md)).*
+**Backend de teste** (escuta em `127.0.0.1:8001`; ver [`backend/README.md`](backend/README.md)):
+
+```powershell
+python -m backend.app
+```
+
+**Middleware:** *a completar na Fase 3.*
 
 ## Testes
 

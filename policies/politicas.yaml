@@ -19,24 +19,30 @@ recursos:
       administrador:
         modo: registos
         campos:
-          id:        { acao: manter }
-          nome:      { acao: manter }
-          email:     { acao: manter }
-          nif:       { acao: manter }
-          data_nasc: { acao: manter }
-          distrito:  { acao: manter }
-          saldo:     { acao: manter }
+          id:            { acao: manter }
+          nome:          { acao: manter }
+          email:         { acao: manter }
+          nif:           { acao: manter }
+          data_nasc:     { acao: manter }
+          morada:        { acao: manter }
+          codigo_postal: { acao: manter }
+          concelho:      { acao: manter }
+          distrito:      { acao: manter }
+          saldo:         { acao: manter }
 
       analista:
         modo: registos
         campos:
-          id:        { acao: pseudonimizar }                           # a91f...
-          nome:      { acao: omitir }
-          email:     { acao: mascarar, manter_inicio: 1, manter_dominio: true }  # j***@exemplo.pt
-          nif:       { acao: mascarar, manter_fim: 4 }                 # *****8905
-          data_nasc: { acao: generalizar, nivel: ano }                 # 1987
-          distrito:  { acao: manter }
-          saldo:     { acao: manter }
+          id:            { acao: pseudonimizar }                           # a91f...
+          nome:          { acao: omitir }
+          email:         { acao: mascarar, manter_inicio: 1, manter_dominio: true }  # j***@exemplo.pt
+          nif:           { acao: mascarar, manter_fim: 4 }                 # *****8905
+          data_nasc:     { acao: generalizar, nivel: ano }                 # 1987
+          morada:        { acao: omitir }
+          codigo_postal: { acao: generalizar, nivel: cp4 }                 # 1050
+          concelho:      { acao: manter }
+          distrito:      { acao: manter }
+          saldo:         { acao: manter }
 
       publico:
         modo: agregado

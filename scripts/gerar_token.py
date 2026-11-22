@@ -16,6 +16,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import jwt
+from dotenv import load_dotenv
 
 ISSUER = "apm-idp-teste"
 AUDIENCE = "adaptive-privacy-middleware"
@@ -27,18 +28,6 @@ UTILIZADORES = {
     "analista": "analista01",
     "publico": "publico01",
 }
-
-
-def carregar_env() -> None:
-    """Lê o .env da raiz para as variáveis de ambiente (sem sobrepor as existentes)."""
-    env = Path(__file__).resolve().parent.parent / ".env"
-    if not env.exists():
-        return
-    for linha in env.read_text(encoding="utf-8").splitlines():
-        linha = linha.strip()
-        if linha and not linha.startswith("#") and "=" in linha:
-            chave, valor = linha.split("=", 1)
-            os.environ.setdefault(chave.strip(), valor.strip())
 
 
 def gerar_token(perfil: str, segredo: str, minutos: int = 60) -> str:
@@ -60,7 +49,7 @@ def main() -> None:
     parser.add_argument("--minutos", type=int, default=60, help="validade (por defeito 60)")
     args = parser.parse_args()
 
-    carregar_env()
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
     segredo = os.environ.get("JWT_SECRET")
     if not segredo:
         sys.exit("Erro: defina JWT_SECRET (ver .env.example).")

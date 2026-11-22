@@ -8,11 +8,17 @@ uvicorn==0.54.0
 # Encaminhamento HTTP (middleware -> backend) e clientes de teste/benchmark
 httpx==0.28.1
 
+# Cliente HTTP usado pelo TestClient do FastAPI/Starlette nos testes
+httpx2==2.16.2
+
 # Autenticação (tokens JWT)
 PyJWT==2.15.1
 
 # Políticas (YAML)
 PyYAML==6.0.4
+
+# Leitura do ficheiro .env (segredos locais)
+python-dotenv==1.2.4
 
 # Dados sintéticos
 Faker==40.63.0

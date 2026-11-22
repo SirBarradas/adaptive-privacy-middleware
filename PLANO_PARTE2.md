@@ -51,8 +51,8 @@ Segurança de Redes e Sistemas de Informação – ISCTE
 
 ## Fase 2 – Backend de teste
 
-- [ ] **6.** Implementar a API REST simples (`GET /clientes`, `GET /clientes/{id}`) com **dados sintéticos** (ex.: Faker), com volumes configuráveis (10, 100, 1 000, 10 000 registos).
-- [ ] **7.** Garantir que o backend só aceita ligações do middleware (rede interna, porta não exposta ou chave partilhada).
+- [x] **6.** Implementar a API REST simples (`GET /clientes`, `GET /clientes/{id}`) com **dados sintéticos** (ex.: Faker), com volumes configuráveis (10, 100, 1 000, 10 000 registos).
+- [x] **7.** Garantir que o backend só aceita ligações do middleware (rede interna, porta não exposta ou chave partilhada).
 
 ## Fase 3 – Núcleo do middleware *(Implementação – 8 valores)*
 

@@ -18,7 +18,7 @@ Políticas de privacidade por recurso e perfil, em [`politicas.yaml`](politicas.
 | `omitir` | — | campo removido |
 | `mascarar` | `manter_inicio`, `manter_fim`, `manter_dominio` | `245678905` → `*****8905` |
 | `pseudonimizar` | — (HMAC-SHA256, chave em variável de ambiente) | `1` → `a91f…` |
-| `generalizar` | `nivel` (ex.: `ano`) | `1987-03-14` → `1987` |
+| `generalizar` | `nivel`: `ano` (datas) ou `cp4` (código postal) | `1987-03-14` → `1987`; `1050-123` → `1050` |
 
 ## Agregações (modo `agregado`)
 
