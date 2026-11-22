@@ -17,6 +17,7 @@ Middleware/proxy de segurança em Python que se coloca entre os clientes e um ba
 | [`tests/`](tests/) | Testes funcionais e de segurança (`pytest`) |
 | [`benchmarks/`](benchmarks/) | Scripts de benchmark e resultados (CSV, tabelas, gráficos) |
 | [`docs/`](docs/) | Documentação técnica: arquitetura, políticas, validação |
+| [`scripts/`](scripts/) | Utilitários (ex.: gerar tokens JWT de teste) |
 | [`report/part1/`](report/part1/) | Relatório da Parte 1 (teórica), em LaTeX |
 | [`report/part2/`](report/part2/) | Relatório da Parte 2 (prática), em LaTeX |
 | [`PLANO_PARTE2.md`](PLANO_PARTE2.md) | Plano de tarefas da Parte 2 (prática) |

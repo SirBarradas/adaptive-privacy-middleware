@@ -1,0 +1,57 @@
+# Políticas de privacidade por recurso e perfil.
+#
+# Regras gerais (aplicadas pelo motor de políticas, tarefa 10):
+# - O perfil vem sempre do token, nunca do pedido.
+# - Campo que não esteja previsto na política -> omitido (omissão por defeito).
+# - Recurso ou perfil sem política, ou política inválida -> pedido recusado (fail-closed).
+# - A chave HMAC da pseudonimização NÃO está aqui: é lida de uma variável de ambiente.
+#
+# Ações por campo: manter, omitir, mascarar, pseudonimizar, generalizar.
+# Perfis em modo "agregado" não recebem registos individuais, apenas agregações,
+# e cada grupo com menos de k_min registos não é divulgado.
+
+versao: 1
+
+recursos:
+  clientes:
+    perfis:
+
+      administrador:
+        modo: registos
+        campos:
+          id:        { acao: manter }
+          nome:      { acao: manter }
+          email:     { acao: manter }
+          nif:       { acao: manter }
+          data_nasc: { acao: manter }
+          distrito:  { acao: manter }
+          saldo:     { acao: manter }
+
+      analista:
+        modo: registos
+        campos:
+          id:        { acao: pseudonimizar }                           # a91f...
+          nome:      { acao: omitir }
+          email:     { acao: mascarar, manter_inicio: 1, manter_dominio: true }  # j***@exemplo.pt
+          nif:       { acao: mascarar, manter_fim: 4 }                 # *****8905
+          data_nasc: { acao: generalizar, nivel: ano }                 # 1987
+          distrito:  { acao: manter }
+          saldo:     { acao: manter }
+
+      publico:
+        modo: agregado
+        k_min: 5
+        agregacoes:
+          - nome: clientes_por_distrito
+            funcao: contagem
+            agrupar_por: distrito
+
+          - nome: clientes_por_faixa_etaria
+            funcao: contagem
+            agrupar_por: data_nasc
+            faixas_etarias: ["18-29", "30-44", "45-64", "65+"]
+
+          - nome: saldo_medio_por_distrito
+            funcao: media
+            campo: saldo
+            agrupar_por: distrito
