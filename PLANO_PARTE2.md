@@ -45,7 +45,7 @@ Segurança de Redes e Sistemas de Informação – ISCTE
 
 ## Fase 1 – Definições (antes de programar)
 
-- [ ] **3.** Fixar o recurso de teste: registo de clientes da Tabela 5.1 (`id`, `nome`, `email`, `nif`, `data_nasc`, `distrito`, `saldo`).
+- [x] **3.** Fixar o recurso de teste: registo de clientes da Tabela 5.1 (`id`, `nome`, `email`, `nif`, `data_nasc`, `distrito`, `saldo`).
 - [ ] **4.** Escrever o ficheiro de políticas (YAML/JSON) por recurso e perfil, com a ação para cada campo (manter, omitir, mascarar, pseudonimizar, generalizar, agregar) e o tamanho mínimo de grupo `k` para agregações.
 - [ ] **5.** Definir os utilizadores e tokens de teste para os três perfis (Administrador, Operacional/Analista, Público/Terceiros).
 
