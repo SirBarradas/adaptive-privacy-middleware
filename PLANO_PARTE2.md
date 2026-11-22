@@ -24,7 +24,7 @@ Segurança de Redes e Sistemas de Informação – ISCTE
 
 ## Progresso geral
 
-- [ ] Fase 0 – Preparação
+- [x] Fase 0 – Preparação
 - [ ] Fase 1 – Definições
 - [ ] Fase 2 – Backend de teste
 - [ ] Fase 3 – Núcleo do middleware
